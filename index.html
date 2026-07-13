@@ -141,11 +141,6 @@ const recordBtn = document.getElementById('recordBtn');
 const streakDisplay = document.getElementById('streakDisplay');
 let completedDates = JSON.parse(localStorage.getItem('grokCompleted')) || [];
 
-function initAudio() {
-  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-  if (audioCtx.state === 'suspended') audioCtx.resume();
-}
-
 function unlockAudio() {
   initAudio();
   try {
@@ -182,17 +177,6 @@ function startQuick(sec) {
   if (sec === 300) msg = "5分お疲れ。Grokは褒めてやる。";
   setTime(sec, msg);
   startTimer();
-}
-
-function startTimer() {
-  unlockAudio();
-  if (intervalId || timeLeft <= 0) return;
-  intervalId = setInterval(() => {
-    timeLeft--; updateDisplay();
-    if (timeLeft <= 0) {
-      clearInterval(intervalId); intervalId = null; endTimer();
-    }
-  }, 1000);
 }
 
 function endTimer() {
@@ -281,32 +265,92 @@ function playBeep() {
   } catch(e) {}
 }
   
-function playAlarm() {
-  initAudio();
-  playBeep();
-  if (navigator.vibrate) navigator.vibrate([200, 80, 200, 80, 400]);
- if (navigator.vibrate) navigator.vibrate([200, 80, 200, 80, 400]);
+<script>
+// ...（上のコードは全部そのまま）...
 
-  if ('speechSynthesis' in window) {
-    const utterance = new SpeechSynthesisUtterance(currentAlarmMessage);
-    utterance.lang = 'ja-JP';
-    utterance.rate = 1.05;
-    utterance.pitch = 0.92;
-
-    // Voicesがロードされるまで待つ（重要修正）
-    const voices = speechSynthesis.getVoices();
-    if (voices.length > 0) {
-      const preferred = voices.find(v => 
-        v.name.includes('Otoya') || 
-        v.name.toLowerCase().includes('male') ||
-        v.name.includes('Kyoko')
-      );
-      if (preferred) utterance.voice = preferred;
-    }
-
-    speechSynthesis.speak(utterance);
+function initAudio() {
+  if (!audioCtx) {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  }
+  if (audioCtx.state === 'suspended') {
+    audioCtx.resume();   // ← これを確実に呼ぶ
   }
 }
+
+// 終了時のアラーム（これを強化）
+function playAlarm() {
+  initAudio();           // ← 毎回呼ぶ
+  audioCtx.resume();     // ← これが一番大事！
+
+  // ビープ音
+  playBeep();
+
+  // 振動
+  if (navigator.vibrate) navigator.vibrate([300, 100, 300, 100, 500]);
+
+  // 音声合成
+  if ('speechSynthesis' in window) {
+    const utterance = new SpeechSynthesisUtterance(currentAlarmMessage || "時間終了！");
+    utterance.lang = 'ja-JP';
+    utterance.rate = 1.08;
+    utterance.pitch = 0.95;
+    utterance.volume = 1;
+
+    // 少し遅らせて音声を再生（ブラウザ対策）
+    setTimeout(() => {
+      speechSynthesis.cancel(); // 前の発話を止める
+      speechSynthesis.speak(utterance);
+    }, 50);
+  }
+}
+
+// ビープ音も少し強化
+function playBeep() {
+  initAudio();
+  try {
+    const beep = (freq, duration, delay = 0) => {
+      setTimeout(() => {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.value = freq;
+        gain.gain.value = 0.7;
+        
+        const filter = audioCtx.createBiquadFilter();
+        filter.type = 'lowpass';
+        filter.frequency.value = 1200;
+        
+        osc.connect(filter).connect(gain).connect(audioCtx.destination);
+        
+        osc.start();
+        gain.gain.linearRampToValueAtTime(0.001, audioCtx.currentTime + duration/1000 + 0.3);
+        osc.stop(audioCtx.currentTime + duration/1000 + 0.4);
+      }, delay);
+    };
+
+    beep(880, 120, 0);
+    beep(660, 160, 180);
+    beep(1100, 220, 420);
+    beep(1320, 280, 700);   // もう一声追加
+  } catch(e) { console.error(e); }
+}
+
+// startTimerも少し強化
+function startTimer() {
+  unlockAudio();
+  if (intervalId || timeLeft <= 0) return;
+  
+  intervalId = setInterval(() => {
+    timeLeft--;
+    updateDisplay();
+    if (timeLeft <= 0) {
+      clearInterval(intervalId);
+      intervalId = null;
+      endTimer();
+    }
+  }, 1000);
+}
+</script>
 
 updateStreak();
 updateDisplay();
