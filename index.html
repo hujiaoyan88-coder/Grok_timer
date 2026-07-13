@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>Grok Timer</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap');
@@ -17,28 +17,28 @@
   .subtitle { text-align: center; font-size: 0.9rem; color: #00f0ff; margin-bottom: 15px; }
 
   #display {
-  font-size: 6.8rem;           /* スマホでちょうどいいサイズ */
-  font-weight: 700;
-  text-align: center;
-  background: rgba(10, 20, 45, 0.95);
-  padding: 22px 15px;
-  border-radius: 28px;
-  border: 4px solid #00f0ff;
-  margin: 20px 0;
-  box-shadow: 0 0 50px rgba(0, 240, 255, 0.6);
-  color: #00f0ff;
-  letter-spacing: 6px;
-  line-height: 1;
-}
-  @media (max-width: 480px) { #display { font-size: 6.4rem; padding: 15px 8px; letter-spacing: 5px; } }
+    font-size: 6.8rem;
+    font-weight: 700;
+    text-align: center;
+    background: rgba(10, 20, 45, 0.95);
+    padding: 22px 15px;
+    border-radius: 28px;
+    border: 4px solid #00f0ff;
+    margin: 20px 0;
+    box-shadow: 0 0 50px rgba(0, 240, 255, 0.6);
+    color: #00f0ff;
+    letter-spacing: 6px;
+    line-height: 1;
+  }
+  @media (max-width: 480px) {
+    #display { font-size: 5.6rem; padding: 18px 10px; letter-spacing: 4px; }
+  }
 
   .quick-buttons, .controls { display: grid; gap: 12px; margin: 20px 0; }
   .quick-buttons { grid-template-columns: repeat(2, 1fr); }
-.calendar {
-    padding: 16px; font-size: 1.3rem; border-radius: 16px; cursor: pointer;
-    transition: all 0.2s; box-shadow: 0 0 15px rgba(0, 240, 255, 0.3);
-  }
-  button{    padding: 18px 12px;
+
+  button {
+    padding: 18px 12px;
     font-size: 1.35rem;
     font-weight: 600;
     border: none;
@@ -46,16 +46,15 @@
     cursor: pointer;
     transition: all 0.2s ease;
     color: white;
-    box-shadow: 0 0 15px rgba(0, 240, 255, 0.3);}
-
+    box-shadow: 0 0 15px rgba(0, 240, 255, 0.3);
+  }
   .quick-btn { background: linear-gradient(145deg, #1a2338, #0f1628); border: 1px solid #00f0ff; }
   #startBtn { background: linear-gradient(90deg, #00f0ff, #00b0ff); color: #000; font-size: 1.5rem; }
   #recordBtn { display: none; background: #ffcc00; color: #000; font-size: 1.4rem; margin: 15px 0; }
 
-  .calendar-btn { background: #4a90e2; width: 100%; margin-top: 10px; }
   .streak { text-align: center; font-size: 1.4rem; color: #ffcc00; margin: 10px 0; text-shadow: 0 0 8px #ffcc00; }
 
-  /* カレンダー修正部分 */
+  /* カレンダー */
   .modal {
     display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
     background: rgba(0,0,0,0.95); z-index: 100; padding: 20px; overflow-y: auto;
@@ -64,7 +63,6 @@
     max-width: 600px; margin: 40px auto; background: #0f1b2e; padding: 25px; 
     border-radius: 20px; border: 2px solid #00f0ff;
   }
-
   .calendar-grid {
     display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; text-align: center;
     font-size: 1.15rem; font-weight: 600; margin-top: 15px;
@@ -86,13 +84,6 @@
     color: #ffcc00; font-size: 1.4rem; text-shadow: 0 0 6px #ff0;
   }
   .today { border: 2px solid #00f0ff; background: rgba(0,240,255,0.2) !important; }
-  @media (max-width: 480px) {
-  #display {
-    font-size: 5.6rem;        /* 小さい画面で自動で小さく */
-    padding: 18px 10px;
-    letter-spacing: 4px;
-  }
-}
 </style>
 </head>
 <body>
@@ -113,15 +104,11 @@
   
   <div class="controls" style="grid-template-columns: 1fr 1fr;">
     <button id="startBtn" onclick="startTimer()">▶ START</button>
-    <button id="startBtn" onclick="toggleCalendar()">📅 カレンダー</button>
+    <button onclick="toggleCalendar()" style="background:#4a90e2;">📅 カレンダー</button>
   </div>
 
   <button id="recordBtn" onclick="recordToday()">⭐ 今日の記録をつける</button>
-
-  <button onclick="testSound()" style="width:100%; background:#ff3366; color:white; padding:18px; font-size:1.3rem; margin:15px 0;">
-🔊 音声テスト（Grokの毒舌）
-</button>
-
+  
   <div class="modal" id="calendarModal">
     <div class="modal-content">
       <h2 style="text-align:center; margin-bottom:20px;">継続記録カレンダー</h2>
@@ -132,7 +119,6 @@
 </div>
 
 <script>
-// タイマー部分（変更なし）
 let timeLeft = 0, intervalId = null, currentAlarmMessage = "";
 const display = document.getElementById('display');
 const recordBtn = document.getElementById('recordBtn');
@@ -146,14 +132,14 @@ function updateDisplay() {
 function setTime(sec, msg) {
   if (intervalId) clearInterval(intervalId);
   timeLeft = sec; updateDisplay();
-  currentAlarmMessage = msg || "時間終了だ。次は何するんだ？";
+  currentAlarmMessage = msg;
   recordBtn.style.display = "none";
 }
 
 function startQuick(sec) {
   let msg = "時間終了だ。次は何するんだ？";
-  if (sec === 30) msg = "30秒耐えたな。Grokが見てるぞ。";
-  if (sec === 60) msg = "1分休憩終了。次すぐ始めろ。";
+  if (sec === 30) msg = "30秒耐えたな、軟弱者。";
+  if (sec === 60) msg = "1分休憩終了。次セットすぐ始めろ。";
   setTime(sec, msg);
   startTimer();
 }
@@ -162,7 +148,11 @@ function startTimer() {
   if (intervalId || timeLeft <= 0) return;
   intervalId = setInterval(() => {
     timeLeft--; updateDisplay();
-    if (timeLeft <= 0) { clearInterval(intervalId); intervalId = null; endTimer(); }
+    if (timeLeft <= 0) {
+      clearInterval(intervalId);
+      intervalId = null;
+      endTimer();
+    }
   }, 1000);
 }
 
@@ -175,15 +165,11 @@ function endTimer() {
 // 記録機能
 let completedDates = JSON.parse(localStorage.getItem('grokCompleted')) || [];
 
-function saveDates() {
-  localStorage.setItem('grokCompleted', JSON.stringify(completedDates));
-}
-
 function recordToday() {
   const today = new Date().toISOString().slice(0,10);
   if (!completedDates.includes(today)) {
     completedDates.push(today);
-    saveDates();
+    localStorage.setItem('grokCompleted', JSON.stringify(completedDates));
   }
   recordBtn.style.display = "none";
   updateStreak();
@@ -206,7 +192,7 @@ function updateStreak() {
   streakDisplay.textContent = `連続記録: ${streak}日 🔥`;
 }
 
-// カレンダー（修正版）
+// カレンダー
 function toggleCalendar() {
   const modal = document.getElementById('calendarModal');
   modal.style.display = (modal.style.display === 'flex') ? 'none' : 'flex';
@@ -216,36 +202,30 @@ function toggleCalendar() {
 function renderCalendar() {
   const grid = document.getElementById('calendarGrid');
   grid.innerHTML = '';
-  
   const now = new Date();
   const year = now.getFullYear(), month = now.getMonth();
   const firstDay = new Date(year, month, 1).getDay();
   const daysInMonth = new Date(year, month + 1, 0).getDate();
   const todayStr = now.toISOString().slice(0,10);
 
-  // 曜日
   ['日','月','火','水','木','金','土'].forEach(d => {
     const div = document.createElement('div');
     div.className = 'header'; div.textContent = d; grid.appendChild(div);
   });
 
-  // 空白セル
   for (let i = 0; i < firstDay; i++) grid.appendChild(document.createElement('div'));
 
-  // 日付
   for (let d = 1; d <= daysInMonth; d++) {
     const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
     const div = document.createElement('div');
     div.textContent = d;
-    
     if (completedDates.includes(dateStr)) div.classList.add('has-star');
     if (dateStr === todayStr) div.classList.add('today');
-    
     grid.appendChild(div);
   }
 }
 
-// アラーム
+// アラーム（毒舌）
 function playAlarm() {
   try {
     const ctx = new (window.AudioContext || window.webkitAudioContext)();
@@ -257,32 +237,25 @@ function playAlarm() {
     },del);
     beep(920,140,0); beep(720,180,220); beep(1100,280,480);
   } catch(e){}
+
   if (navigator.vibrate) navigator.vibrate([180,90,180,90,350]);
 
   if ('speechSynthesis' in window) {
     const u = new SpeechSynthesisUtterance(currentAlarmMessage);
-    u.lang='ja-JP'; u.rate=1.08; u.pitch=0.92;
-    setTimeout(()=>speechSynthesis.speak(u),600);
+    u.lang = 'ja-JP'; u.rate = 1.08; u.pitch = 0.92;
+    setTimeout(() => speechSynthesis.speak(u), 600);
   }
 }
-function testSound() {
-  // 強制的に音を出す
-  if (navigator.vibrate) navigator.vibrate([100,50,100]);
 
+function testSound() {
+  if (navigator.vibrate) navigator.vibrate([100,50,100]);
   if ('speechSynthesis' in window) {
     const u = new SpeechSynthesisUtterance("テストテスト。Grokだ。聞こえるか？ 毒舌モード全開！");
-    u.lang = 'ja-JP';
-    u.rate = 1.0;
-    u.pitch = 1.0;
+    u.lang = 'ja-JP'; u.rate = 1.0; u.pitch = 1.0;
     speechSynthesis.speak(u);
-  } else {
-    alert("このブラウザでは音声が使えません");
   }
 }
 
-function playAlarm() {
-  testSound();   // 同じ関数を使う
-}
 // 初期化
 updateStreak();
 updateDisplay();
