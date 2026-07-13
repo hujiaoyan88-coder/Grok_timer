@@ -136,6 +136,26 @@ function setTime(sec, msg) {
   recordBtn.style.display = "none";
 }
 
+  function initAudio() {
+  if (!audioCtx) {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  }
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+}
+
+  function unlockAudio() {
+  initAudio();
+  // 超短い無音を鳴らして解除
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    osc.frequency.value = 1; // ほぼ無音
+    osc.connect(ctx.destination);
+    osc.start();
+    setTimeout(() => osc.stop(), 10);
+  } catch(e) {}
+}
+
 function startQuick(sec) {
   unlockAudio(); 
   let msg = "時間終了だ。次は何するんだ？";
@@ -229,13 +249,6 @@ function renderCalendar() {
 
 // アラーム（毒舌）
 let audioCtx;
-
-function initAudio() {
-  if (!audioCtx) {
-    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-  }
-  if (audioCtx.state === 'suspended') audioCtx.resume();
-}
 
 function playBeep() {
   initAudio();
