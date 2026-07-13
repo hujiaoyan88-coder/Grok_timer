@@ -292,17 +292,6 @@ function testSound() {
     speechSynthesis.speak(u);
   }
 }
-</script>
-
-function testSound() {
-  if (navigator.vibrate) navigator.vibrate([100,50,100]);
-  if ('speechSynthesis' in window) {
-    const u = new SpeechSynthesisUtterance("テストテスト。Grokだ。聞こえるか？ 毒舌モード全開！");
-    u.lang = 'ja-JP'; u.rate = 1.0; u.pitch = 1.0;
-    speechSynthesis.speak(u);
-  }
-}
-
 // 初期化
 updateStreak();
 updateDisplay();
