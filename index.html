@@ -258,15 +258,53 @@ function renderCalendar() {
     grid.appendChild(div);
   }
 }
-
+// ==================== アラーム ====================
+function playBeep() {
+  initAudio();
+  try {
+    const beep = (freq, duration, delay) => {
+      setTimeout(() => {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.value = freq;
+        gain.gain.value = 0.6;
+        osc.connect(gain).connect(audioCtx.destination);
+        osc.start();
+        gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + duration/1000 + 0.1);
+        osc.stop(audioCtx.currentTime + duration/1000 + 0.2);
+      }, delay);
+    };
+    beep(880, 150, 0);
+    beep(660, 180, 220);
+    beep(1100, 280, 480);
+  } catch(e) {}
+}
+  
 function playAlarm() {
   initAudio();
-  // beep & vibrate & speech（省略・前回と同じ）
-  if (navigator.vibrate) navigator.vibrate([200, 100, 200, 100, 400]);
+  playBeep();
+  if (navigator.vibrate) navigator.vibrate([200, 80, 200, 80, 400]);
+ if (navigator.vibrate) navigator.vibrate([200, 80, 200, 80, 400]);
+
   if ('speechSynthesis' in window) {
-    const u = new SpeechSynthesisUtterance(currentAlarmMessage);
-    u.lang = 'ja-JP'; u.rate = 1.05; u.pitch = 0.9;
-    speechSynthesis.speak(u);
+    const utterance = new SpeechSynthesisUtterance(currentAlarmMessage);
+    utterance.lang = 'ja-JP';
+    utterance.rate = 1.05;
+    utterance.pitch = 0.92;
+
+    // Voicesがロードされるまで待つ（重要修正）
+    const voices = speechSynthesis.getVoices();
+    if (voices.length > 0) {
+      const preferred = voices.find(v => 
+        v.name.includes('Otoya') || 
+        v.name.toLowerCase().includes('male') ||
+        v.name.includes('Kyoko')
+      );
+      if (preferred) utterance.voice = preferred;
+    }
+
+    speechSynthesis.speak(utterance);
   }
 }
 
