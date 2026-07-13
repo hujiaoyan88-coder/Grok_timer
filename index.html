@@ -271,25 +271,12 @@ function playAlarm() {
     u.lang = 'ja-JP';
     u.rate = 1.05;
     u.pitch = 0.9;
-
-    speechSynthesis.speak(u);
-  }
-}
-
-function testSound() {
-  playBeep();
-  if (navigator.vibrate) navigator.vibrate([100,50,100]);
-
-  if ('speechSynthesis' in window) {
-    const u = new SpeechSynthesisUtterance("テストテスト。Grokだぞ。聞こえるか？");
-    u.lang = 'ja-JP';
-    u.rate = 1.0;
-    u.pitch = 0.9;
-    const voices = speechSynthesis.getVoices();
+　　　const voices = speechSynthesis.getVoices();
     const male = voices.find(v => v.name.includes('Otoya') || v.name.toLowerCase().includes('male'));
     if (male) u.voice = male;
     speechSynthesis.speak(u);
   }
+
 }
 // 初期化
 updateStreak();
