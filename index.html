@@ -3,127 +3,163 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Grok タイマー</title>
+<title>⌛️毒舌Grok タイマー</title>
 <style>
   body {
-    background: #0f0f1a;
+    background: radial-gradient(circle at center, #0a1428 0%, #000000 80%);
     color: #fff;
-    font-family: system-ui, -apple-system, sans-serif;
+    font-family: 'Orbitron', system-ui, sans-serif;
     margin: 0;
     padding: 20px;
     min-height: 100vh;
+    overflow: hidden;
   }
   .container {
     max-width: 620px;
     margin: 0 auto;
+    position: relative;
   }
   h1 {
     text-align: center;
-    font-size: 2.2rem;
-    margin-bottom: 10px;
-    color: #4a90e2;
+    font-size: 2.4rem;
+    margin: 10px 0 20px;
+    background: linear-gradient(90deg, #00f0ff, #4a90e2);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    letter-spacing: 3px;
   }
+  .subtitle {
+    text-align: center;
+    font-size: 0.9rem;
+    color: #00f0ff;
+    margin-bottom: 20px;
+    letter-spacing: 2px;
+    opacity: 0.8;
+  }
+
   #display {
-    font-size: 7rem;
+    font-size: 7.5rem;
     font-weight: 700;
     text-align: center;
-    background: #1a1a2e;
-    padding: 30px 20px;
-    border-radius: 24px;
-    border: 4px solid #4a90e2;
+    background: rgba(10, 20, 40, 0.95);
+    padding: 25px 20px;
+    border-radius: 30px;
+    border: 3px solid #00f0ff;
     margin: 20px 0;
-    font-family: monospace;
-    letter-spacing: 4px;
+    box-shadow: 0 0 40px rgba(0, 240, 255, 0.4),
+                inset 0 0 30px rgba(0, 240, 255, 0.2);
+    font-family: 'Orbitron', monospace;
+    letter-spacing: 6px;
+    color: #00f0ff;
   }
+
   .quick-buttons {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: 12px;
-    margin-bottom: 25px;
+    gap: 14px;
+    margin-bottom: 30px;
   }
   button {
-    padding: 18px 10px;
-    font-size: 1.3rem;
+    padding: 18px 12px;
+    font-size: 1.35rem;
     font-weight: 600;
     border: none;
     border-radius: 16px;
     cursor: pointer;
-    transition: all 0.1s ease;
+    transition: all 0.2s ease;
     color: white;
+    box-shadow: 0 0 15px rgba(0, 240, 255, 0.3);
   }
   button:active {
-    transform: scale(0.96);
+    transform: scale(0.95);
   }
   .quick-btn {
-    background: #16213e;
-    font-size: 1.4rem;
+    background: linear-gradient(145deg, #1a2338, #0f1628);
+    border: 1px solid #00f0ff;
   }
   .quick-btn:hover {
-    background: #1f2a4a;
+    box-shadow: 0 0 25px rgba(0, 240, 255, 0.6);
+    background: linear-gradient(145deg, #00f0ff, #4a90e2);
+    color: #000;
   }
+
   .controls {
     display: flex;
     gap: 12px;
     justify-content: center;
     flex-wrap: wrap;
-    margin-bottom: 25px;
+    margin-bottom: 30px;
   }
-  #startBtn { background: #4a90e2; font-size: 1.4rem; padding: 18px 40px; }
+  #startBtn { 
+    background: linear-gradient(90deg, #00f0ff, #00b0ff); 
+    color: #000;
+    font-size: 1.5rem;
+    padding: 18px 50px;
+    box-shadow: 0 0 30px rgba(0, 240, 255, 0.7);
+  }
   #pauseBtn { background: #e67e22; }
-  #resetBtn { background: #555; }
-  
+  #resetBtn { background: #444; }
+
   .custom-section {
-    background: #1a1a2e;
-    padding: 20px;
-    border-radius: 20px;
-    margin-bottom: 20px;
+    background: rgba(15, 23, 42, 0.9);
+    padding: 22px;
+    border-radius: 24px;
+    border: 1px solid #00f0ff;
+    box-shadow: 0 0 20px rgba(0, 240, 255, 0.2);
+    margin-bottom: 25px;
   }
   .custom-inputs {
     display: flex;
-    gap: 10px;
+    gap: 12px;
     align-items: center;
     justify-content: center;
-    margin-bottom: 15px;
+    margin-bottom: 16px;
   }
   input[type="number"] {
-    width: 90px;
-    padding: 12px;
-    font-size: 1.4rem;
+    width: 100px;
+    padding: 14px;
+    font-size: 1.5rem;
     text-align: center;
-    border: 2px solid #4a90e2;
+    border: 2px solid #00f0ff;
     border-radius: 12px;
-    background: #0f0f1a;
-    color: white;
+    background: #0a1428;
+    color: #fff;
+    box-shadow: inset 0 0 10px rgba(0, 240, 255, 0.3);
   }
+
   .message {
     text-align: center;
-    font-size: 1.3rem;
-    min-height: 40px;
-    color: #4ade80;
-    margin-top: 10px;
+    font-size: 1.35rem;
+    min-height: 70px;
+    color: #ffcc00;
+    margin: 15px 0;
+    text-shadow: 0 0 10px #ffcc00;
+    font-weight: 600;
   }
+
   .test-btn {
-    background: #6b46c1;
+    background: linear-gradient(90deg, #6b46c1, #9f7aea);
     width: 100%;
-    margin-top: 10px;
+    padding: 16px;
+    font-size: 1.2rem;
+    border-radius: 16px;
+    box-shadow: 0 0 20px rgba(155, 122, 234, 0.5);
   }
 </style>
 </head>
 <body>
 <div class="container">
-  <h1>⏱️ Grok タイマー</h1>
+  <h1>🗣️タイマー</h1>
   
   <div id="display">00:00</div>
   
-  <!-- ワンタップボタン -->
   <div class="quick-buttons">
-    <button class="quick-btn" onclick="startQuick(30)">30秒</button>
-    <button class="quick-btn" onclick="startQuick(60)">1分</button>
+    <button class="quick-btn" onclick="startQuick(30)">30秒（プランク）</button>
+    <button class="quick-btn" onclick="startQuick(60)">1分（レスト）</button>
     <button class="quick-btn" onclick="startQuick(300)">5分</button>
     <button class="quick-btn" onclick="startQuick(600)">10分</button>
   </div>
   
-  <!-- カスタム -->
   <div class="custom-section">
     <div style="text-align:center; margin-bottom:10px; font-weight:600;">カスタム時間</div>
     <div class="custom-inputs">
@@ -131,10 +167,9 @@
       <span style="font-size:1.5rem;">：</span>
       <input type="number" id="secInput" placeholder="秒" min="0" max="59" value="30">
     </div>
-    <button onclick="startCustom()" style="width:100%; background:#4a90e2; padding:16px; font-size:1.3rem; border-radius:16px;">この時間でスタート</button>
+    <button onclick="startCustom()" style="width:100%; background:#e74c3c; padding:16px; font-size:1.3rem; border-radius:16px;">この時間でスタート</button>
   </div>
   
-  <!-- 操作ボタン -->
   <div class="controls">
     <button id="startBtn" onclick="startTimer()">▶ スタート</button>
     <button id="pauseBtn" onclick="pauseTimer()">⏸ 一時停止</button>
@@ -143,7 +178,7 @@
   
   <div id="message" class="message"></div>
   
-  <button class="test-btn" onclick="playAlarm()">🔊 アラームをテスト</button>
+  <button class="test-btn" onclick="playAlarm()">🔊 アラームテスト</button>
 </div>
 
 <script>
@@ -151,24 +186,31 @@ let timeLeft = 0;
 let intervalId = null;
 let display = document.getElementById('display');
 let messageEl = document.getElementById('message');
+let currentAlarmMessage = "時間終了だ。次は何するんだ？";
 
 function updateDisplay() {
   const min = Math.floor(timeLeft / 60);
   const sec = timeLeft % 60;
-  display.textContent = 
-    String(min).padStart(2, '0') + ':' + String(sec).padStart(2, '0');
+  display.textContent = String(min).padStart(2, '0') + ':' + String(sec).padStart(2, '0');
 }
 
-function setTime(seconds) {
+function setTime(seconds, customMessage = null) {
   pauseTimer();
   timeLeft = seconds;
   updateDisplay();
   messageEl.textContent = '';
   display.style.color = '#fff';
+  if (customMessage) currentAlarmMessage = customMessage;
 }
 
 function startQuick(seconds) {
-  setTime(seconds);
+  let msg = "時間終了だ。次は何するんだ？";
+  if (seconds === 30) {
+    msg = "30秒耐えたな、軟弱者。息切れしてる顔が想像できるわ。Grokが見てるぞ。";
+  } else if (seconds === 60) {
+    msg = "1分休憩終了。まだ座ってるのか？ 甘ったれるな、弱虫。次セットすぐ始めろ、時間は待たないぞ。";
+  }
+  setTime(seconds, msg);
   startTimer();
 }
 
@@ -180,18 +222,17 @@ function startCustom() {
     setTime(total);
     startTimer();
   } else {
-    alert('時間を入力してね！');
+    alert('時間を入力しろよ、ボケ。');
   }
 }
 
 function startTimer() {
-  if (intervalId) return; // すでに動いている
+  if (intervalId) return;
   if (timeLeft <= 0) return;
 
   intervalId = setInterval(() => {
     timeLeft--;
     updateDisplay();
-
     if (timeLeft <= 0) {
       clearInterval(intervalId);
       intervalId = null;
@@ -217,68 +258,46 @@ function resetTimer() {
 
 function endTimer() {
   display.style.color = '#ff6b6b';
-  messageEl.innerHTML = '🎉 タイマー終了！';
+  messageEl.innerHTML = '🗣️ 毒舌タイム！';
   playAlarm();
 }
 
 function playAlarm() {
-  // ビープ音（Web Audio API）
+  // ビープ音
   try {
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     const playBeep = (freq, duration, delay) => {
       setTimeout(() => {
         const osc = audioCtx.createOscillator();
         const gain = audioCtx.createGain();
-        osc.type = 'sine';
+        osc.type = 'sawtooth';
         osc.frequency.value = freq;
-        gain.gain.value = 0.6;
-
-        const filter = audioCtx.createBiquadFilter();
-        filter.type = 'lowpass';
-        filter.frequency.value = 1200;
-
-        osc.connect(filter);
-        filter.connect(gain);
+        gain.gain.value = 0.5;
+        osc.connect(gain);
         gain.connect(audioCtx.destination);
-
         osc.start();
-        setTimeout(() => {
-          gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.1);
-          setTimeout(() => osc.stop(), 150);
-        }, duration);
+        setTimeout(() => { gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.1); osc.stop(); }, duration);
       }, delay);
     };
-
-    // 3回ビープ
-    playBeep(880, 180, 0);
-    playBeep(990, 180, 280);
-    playBeep(1100, 220, 560);
+    playBeep(880, 150, 0);
+    playBeep(660, 200, 250);
+    playBeep(990, 300, 500);
   } catch(e) {}
 
-  // 振動（スマホ対応）
-  if (navigator.vibrate) {
-    navigator.vibrate([200, 100, 200, 100, 400]);
-  }
+  if (navigator.vibrate) navigator.vibrate([150, 80, 150, 80, 300]);
 
-  // Grokオリジナル音声（日本語）
+  // 毒舌音声
   if ('speechSynthesis' in window) {
-    const utterance = new SpeechSynthesisUtterance(
-      'タイマー終了です！ Grokです。次のミッションは何ですか？ 準備はできましたか？'
-    );
+    const utterance = new SpeechSynthesisUtterance(currentAlarmMessage);
     utterance.lang = 'ja-JP';
-    utterance.rate = 1.05;
-    utterance.pitch = 1.0;
-    utterance.volume = 1.0;
-
-    setTimeout(() => {
-      speechSynthesis.speak(utterance);
-    }, 900);
-  } else {
-    alert('このブラウザでは音声が使えません');
+    utterance.rate = 1.1;
+    utterance.pitch = 0.95;
+    utterance.volume = 1;
+    setTimeout(() => speechSynthesis.speak(utterance), 700);
   }
 }
 
-// 初期表示
+// 初期化
 updateDisplay();
 </script>
 </body>
