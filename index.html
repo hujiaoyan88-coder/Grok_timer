@@ -118,6 +118,10 @@
 
   <button id="recordBtn" onclick="recordToday()">⭐ 今日の記録をつける</button>
 
+  <button onclick="testSound()" style="width:100%; background:#ff3366; color:white; padding:18px; font-size:1.3rem; margin:15px 0;">
+🔊 音声テスト（Grokの毒舌）
+</button>
+
   <div class="modal" id="calendarModal">
     <div class="modal-content">
       <h2 style="text-align:center; margin-bottom:20px;">継続記録カレンダー</h2>
@@ -261,7 +265,24 @@ function playAlarm() {
     setTimeout(()=>speechSynthesis.speak(u),600);
   }
 }
+function testSound() {
+  // 強制的に音を出す
+  if (navigator.vibrate) navigator.vibrate([100,50,100]);
 
+  if ('speechSynthesis' in window) {
+    const u = new SpeechSynthesisUtterance("テストテスト。Grokだ。聞こえるか？ 毒舌モード全開！");
+    u.lang = 'ja-JP';
+    u.rate = 1.0;
+    u.pitch = 1.0;
+    speechSynthesis.speak(u);
+  } else {
+    alert("このブラウザでは音声が使えません");
+  }
+}
+
+function playAlarm() {
+  testSound();   // 同じ関数を使う
+}
 // 初期化
 updateStreak();
 updateDisplay();
