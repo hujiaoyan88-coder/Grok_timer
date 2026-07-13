@@ -54,7 +54,6 @@
 
   .streak { text-align: center; font-size: 1.4rem; color: #ffcc00; margin: 10px 0; text-shadow: 0 0 8px #ffcc00; }
 
-  /* カレンダー */
   .modal {
     display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
     background: rgba(0,0,0,0.95); z-index: 100; padding: 20px; overflow-y: auto;
@@ -119,57 +118,74 @@
 </div>
 
 <script>
-let timeLeft = 0, intervalId = null, currentAlarmMessage = "";
+let timeLeft = 0;
+let intervalId = null;
+let currentAlarmMessage = "";
+let audioCtx = null;
+
 const display = document.getElementById('display');
 const recordBtn = document.getElementById('recordBtn');
 const streakDisplay = document.getElementById('streakDisplay');
+let completedDates = JSON.parse(localStorage.getItem('grokCompleted')) || [];
 
-function updateDisplay() {
-  const m = Math.floor(timeLeft / 60), s = timeLeft % 60;
-  display.textContent = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
-}
-
-function setTime(sec, msg) {
-  if (intervalId) clearInterval(intervalId);
-  timeLeft = sec; updateDisplay();
-  currentAlarmMessage = msg;
-  recordBtn.style.display = "none";
-}
-
-  function initAudio() {
+// Audio Context 安全初期化
+function initAudio() {
   if (!audioCtx) {
     audioCtx = new (window.AudioContext || window.webkitAudioContext)();
   }
-  if (audioCtx.state === 'suspended') audioCtx.resume();
+  if (audioCtx.state === 'suspended') {
+    audioCtx.resume();
+  }
 }
 
-  function unlockAudio() {
+// iOS/Safari対策
+function unlockAudio() {
   initAudio();
-  // 超短い無音を鳴らして解除
   try {
-    const ctx = new (window.AudioContext || window.webkitAudioContext)();
-    const osc = ctx.createOscillator();
-    osc.frequency.value = 1; // ほぼ無音
-    osc.connect(ctx.destination);
-    osc.start();
-    setTimeout(() => osc.stop(), 10);
+    const oscillator = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    oscillator.frequency.setValueAtTime(1, audioCtx.currentTime);
+    gain.gain.value = 0.001;
+    oscillator.connect(gain).connect(audioCtx.destination);
+    oscillator.start();
+    oscillator.stop(audioCtx.currentTime + 0.01);
   } catch(e) {}
 }
 
+function updateDisplay() {
+  const m = Math.floor(timeLeft / 60);
+  const s = timeLeft % 60;
+  display.textContent = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+}
+
+function setTime(sec, msg = "時間終了だ。次は何するんだ？") {
+  if (intervalId) clearInterval(intervalId);
+  timeLeft = sec;
+  currentAlarmMessage = msg;
+  updateDisplay();
+  recordBtn.style.display = "none";
+  display.style.color = '#00f0ff';
+}
+
 function startQuick(sec) {
-  unlockAudio(); 
+  unlockAudio();
   let msg = "時間終了だ。次は何するんだ？";
   if (sec === 30) msg = "30秒耐えたな、軟弱者。";
   if (sec === 60) msg = "1分休憩終了。次セットすぐ始めろ。";
+  if (sec === 180) msg = "3分集中したな。まだまだいけるぞ。";
+  if (sec === 300) msg = "5分お疲れ。Grokは褒めてやる。";
+  
   setTime(sec, msg);
   startTimer();
 }
 
 function startTimer() {
-  unlockAudio(); 
+  unlockAudio();
   if (intervalId || timeLeft <= 0) return;
+
   intervalId = setInterval(() => {
-    timeLeft--; updateDisplay();
+    timeLeft--;
+    updateDisplay();
     if (timeLeft <= 0) {
       clearInterval(intervalId);
       intervalId = null;
@@ -184,9 +200,7 @@ function endTimer() {
   playAlarm();
 }
 
-// 記録機能
-let completedDates = JSON.parse(localStorage.getItem('grokCompleted')) || [];
-
+// ==================== 記録機能 ====================
 function recordToday() {
   const today = new Date().toISOString().slice(0,10);
   if (!completedDates.includes(today)) {
@@ -195,7 +209,7 @@ function recordToday() {
   }
   recordBtn.style.display = "none";
   updateStreak();
-  toggleCalendar();
+  toggleCalendar(); // 記録したらカレンダー表示
 }
 
 function updateStreak() {
@@ -203,95 +217,130 @@ function updateStreak() {
     streakDisplay.textContent = "連続記録: 0日 🔥";
     return;
   }
-  let streak = 1;
+
   const sorted = [...completedDates].sort().reverse();
+  let streak = 1;
   let current = new Date(sorted[0]);
+
   for (let i = 1; i < sorted.length; i++) {
     const prev = new Date(sorted[i]);
-    if ((current - prev) / 86400000 === 1) streak++;
-    else break;
+    const diffDays = (current - prev) / (1000 * 60 * 60 * 24);
+    if (diffDays === 1) {
+      streak++;
+      current = prev;
+    } else {
+      break;
+    }
   }
   streakDisplay.textContent = `連続記録: ${streak}日 🔥`;
 }
 
-// カレンダー
+// ==================== カレンダー ====================
 function toggleCalendar() {
   const modal = document.getElementById('calendarModal');
-  modal.style.display = (modal.style.display === 'flex') ? 'none' : 'flex';
-  if (modal.style.display === 'flex') renderCalendar();
+  if (modal.style.display === 'flex') {
+    modal.style.display = 'none';
+  } else {
+    modal.style.display = 'flex';
+    renderCalendar();
+  }
 }
 
 function renderCalendar() {
   const grid = document.getElementById('calendarGrid');
   grid.innerHTML = '';
+
   const now = new Date();
-  const year = now.getFullYear(), month = now.getMonth();
+  const year = now.getFullYear();
+  const month = now.getMonth();
   const firstDay = new Date(year, month, 1).getDay();
   const daysInMonth = new Date(year, month + 1, 0).getDate();
   const todayStr = now.toISOString().slice(0,10);
 
+  // 曜日ヘッダー
   ['日','月','火','水','木','金','土'].forEach(d => {
     const div = document.createElement('div');
-    div.className = 'header'; div.textContent = d; grid.appendChild(div);
+    div.className = 'header';
+    div.textContent = d;
+    grid.appendChild(div);
   });
 
-  for (let i = 0; i < firstDay; i++) grid.appendChild(document.createElement('div'));
+  // 空白
+  for (let i = 0; i < firstDay; i++) {
+    grid.appendChild(document.createElement('div'));
+  }
 
+  // 日付
   for (let d = 1; d <= daysInMonth; d++) {
     const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
     const div = document.createElement('div');
     div.textContent = d;
+
     if (completedDates.includes(dateStr)) div.classList.add('has-star');
     if (dateStr === todayStr) div.classList.add('today');
+
     grid.appendChild(div);
   }
 }
 
-// アラーム（毒舌）
-let audioCtx;
-
+// ==================== アラーム ====================
 function playBeep() {
   initAudio();
   try {
-    const beep = (f, dur, del) => setTimeout(() => {
-      const o = audioCtx.createOscillator();
-      const g = audioCtx.createGain();
-      o.type = 'sawtooth';
-      o.frequency.value = f;
-      g.gain.value = 0.5;
-      o.connect(g);
-      g.connect(audioCtx.destination);
-      o.start();
+    const beep = (freq, duration, delay) => {
       setTimeout(() => {
-        g.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.1);
-        o.stop();
-      }, dur);
-    }, del);
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.value = freq;
+        gain.gain.value = 0.6;
+        osc.connect(gain).connect(audioCtx.destination);
+        osc.start();
+        gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + duration/1000 + 0.1);
+        osc.stop(audioCtx.currentTime + duration/1000 + 0.2);
+      }, delay);
+    };
     beep(880, 150, 0);
-    beep(660, 180, 250);
-    beep(1100, 250, 500);
+    beep(660, 180, 220);
+    beep(1100, 280, 480);
   } catch(e) {}
 }
 
 function playAlarm() {
   playBeep();
-  if (navigator.vibrate) navigator.vibrate([200, 100, 200, 100, 400]);
+  if (navigator.vibrate) navigator.vibrate([200, 80, 200, 80, 400]);
 
   if ('speechSynthesis' in window) {
-    const u = new SpeechSynthesisUtterance(currentAlarmMessage);
-    u.lang = 'ja-JP';
-    u.rate = 1.05;
-    u.pitch = 0.9;
-　　　const voices = speechSynthesis.getVoices();
-    const male = voices.find(v => v.name.includes('Otoya') || v.name.toLowerCase().includes('male'));
-    if (male) u.voice = male;
-    speechSynthesis.speak(u);
-  }
+    const utterance = new SpeechSynthesisUtterance(currentAlarmMessage);
+    utterance.lang = 'ja-JP';
+    utterance.rate = 1.05;
+    utterance.pitch = 0.92;
 
+    // Voicesがロードされるまで待つ（重要修正）
+    const voices = speechSynthesis.getVoices();
+    if (voices.length > 0) {
+      const preferred = voices.find(v => 
+        v.name.includes('Otoya') || 
+        v.name.toLowerCase().includes('male') ||
+        v.name.includes('Kyoko')
+      );
+      if (preferred) utterance.voice = preferred;
+    }
+
+    speechSynthesis.speak(utterance);
+  }
 }
-// 初期化
+
+// ==================== 初期化 ====================
 updateStreak();
 updateDisplay();
+
+// 音声読み込みイベント（重要）
+if ('speechSynthesis' in window) {
+  speechSynthesis.onvoiceschanged = () => {
+    console.log('Voices loaded');
+  };
+}
 </script>
 </body>
 </html>
