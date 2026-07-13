@@ -226,26 +226,73 @@ function renderCalendar() {
 }
 
 // アラーム（毒舌）
-function playAlarm() {
-  try {
-    const ctx = new (window.AudioContext || window.webkitAudioContext)();
-    const beep = (f,dur,del) => setTimeout(() => {
-      const o = ctx.createOscillator(), g = ctx.createGain();
-      o.type='sawtooth'; o.frequency.value=f; g.gain.value=0.6;
-      o.connect(g); g.connect(ctx.destination); o.start();
-      setTimeout(()=>{g.gain.linearRampToValueAtTime(0,ctx.currentTime+0.15);o.stop();},dur);
-    },del);
-    beep(920,140,0); beep(720,180,220); beep(1100,280,480);
-  } catch(e){}
+let audioCtx;
 
-  if (navigator.vibrate) navigator.vibrate([180,90,180,90,350]);
+function initAudio() {
+  if (!audioCtx) {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  }
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+}
+
+function playBeep() {
+  initAudio();
+  try {
+    const beep = (f, dur, del) => setTimeout(() => {
+      const o = audioCtx.createOscillator();
+      const g = audioCtx.createGain();
+      o.type = 'sawtooth';
+      o.frequency.value = f;
+      g.gain.value = 0.5;
+      o.connect(g);
+      g.connect(audioCtx.destination);
+      o.start();
+      setTimeout(() => {
+        g.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.1);
+        o.stop();
+      }, dur);
+    }, del);
+    beep(880, 150, 0);
+    beep(660, 180, 250);
+    beep(1100, 250, 500);
+  } catch(e) {}
+}
+
+function playAlarm() {
+  playBeep();
+  if (navigator.vibrate) navigator.vibrate([200, 100, 200, 100, 400]);
 
   if ('speechSynthesis' in window) {
     const u = new SpeechSynthesisUtterance(currentAlarmMessage);
-    u.lang = 'ja-JP'; u.rate = 1.08; u.pitch = 0.92;
-    setTimeout(() => speechSynthesis.speak(u), 600);
+    u.lang = 'ja-JP';
+    u.rate = 1.05;
+    u.pitch = 0.9;
+
+    // 男性声優先
+    const voices = speechSynthesis.getVoices();
+    const male = voices.find(v => v.name.includes('Otoya') || v.name.toLowerCase().includes('male'));
+    if (male) u.voice = male;
+
+    speechSynthesis.speak(u);
   }
 }
+
+function testSound() {
+  playBeep();
+  if (navigator.vibrate) navigator.vibrate([100,50,100]);
+
+  if ('speechSynthesis' in window) {
+    const u = new SpeechSynthesisUtterance("テストテスト。Grokだぞ。聞こえるか？");
+    u.lang = 'ja-JP';
+    u.rate = 1.0;
+    u.pitch = 0.9;
+    const voices = speechSynthesis.getVoices();
+    const male = voices.find(v => v.name.includes('Otoya') || v.name.toLowerCase().includes('male'));
+    if (male) u.voice = male;
+    speechSynthesis.speak(u);
+  }
+}
+</script>
 
 function testSound() {
   if (navigator.vibrate) navigator.vibrate([100,50,100]);
