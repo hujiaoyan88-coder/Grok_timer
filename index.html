@@ -272,11 +272,6 @@ function playAlarm() {
     u.rate = 1.05;
     u.pitch = 0.9;
 
-    // 男性声優先
-    const voices = speechSynthesis.getVoices();
-    const male = voices.find(v => v.name.includes('Otoya') || v.name.toLowerCase().includes('male'));
-    if (male) u.voice = male;
-
     speechSynthesis.speak(u);
   }
 }
