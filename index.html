@@ -37,22 +37,22 @@
     opacity: 0.8;
   }
 
-  #display {
-    font-size: 6rem
+#display {
+    font-size: 8rem;          /* ← ここを大きくした */
     font-weight: 700;
     text-align: center;
     background: rgba(10, 20, 40, 0.95);
-    padding: 25px 20px;
+    padding: 20px 10px;       /* 上下少し減らしてバランス */
     border-radius: 30px;
     border: 3px solid #00f0ff;
     margin: 20px 0;
-    box-shadow: 0 0 40px rgba(0, 240, 255, 0.4),
-                inset 0 0 30px rgba(0, 240, 255, 0.2);
+    box-shadow: 0 0 45px rgba(0, 240, 255, 0.5),
+                inset 0 0 35px rgba(0, 240, 255, 0.25);
     font-family: 'Orbitron', monospace;
-    letter-spacing: 6px;
+    letter-spacing: 8px;
     color: #00f0ff;
-  }
-
+    line-height: 1;           /* 追加：数字が詰まりすぎないように */
+}
   .quick-buttons {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
@@ -145,6 +145,15 @@
     border-radius: 16px;
     box-shadow: 0 0 20px rgba(155, 122, 234, 0.5);
   }
+
+  @media (max-width: 480px) {
+  #display {
+    font-size: 6.5rem;      /* 小さい画面では少し控えめに */
+    padding: 15px 8px;
+    letter-spacing: 5px;
+  }
+}
+  
 </style>
 </head>
 <body>
