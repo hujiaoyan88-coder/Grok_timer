@@ -3,64 +3,35 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>⌛️毒舌Grok タイマー</title>
+<title>Grok Timer</title>
 <style>
+  @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap');
   body {
     background: radial-gradient(circle at center, #0a1428 0%, #000000 80%);
     color: #fff;
     font-family: 'Orbitron', system-ui, sans-serif;
-    margin: 0;
-    padding: 20px;
-    min-height: 100vh;
-    overflow: hidden;
+    margin: 0; padding: 20px; min-height: 100vh;
   }
-  .container {
-    max-width: 620px;
-    margin: 0 auto;
-    position: relative;
-  }
-  h1 {
-    text-align: center;
-    font-size: 2.4rem;
-    margin: 10px 0 20px;
-    background: linear-gradient(90deg, #00f0ff, #4a90e2);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    letter-spacing: 3px;
-  }
-  .subtitle {
-    text-align: center;
-    font-size: 0.9rem;
-    color: #00f0ff;
-    margin-bottom: 20px;
-    letter-spacing: 2px;
-    opacity: 0.8;
-  }
+  .container { max-width: 620px; margin: 0 auto; }
+  h1 { text-align: center; font-size: 2.4rem; margin: 10px 0 5px; background: linear-gradient(90deg, #00f0ff, #4a90e2); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  .subtitle { text-align: center; font-size: 0.9rem; color: #00f0ff; margin-bottom: 15px; }
 
-#display {
-    font-size: 8rem;          /* ← ここを大きくした */
-    font-weight: 700;
-    text-align: center;
-    background: rgba(10, 20, 40, 0.95);
-    padding: 20px 10px;       /* 上下少し減らしてバランス */
-    border-radius: 30px;
-    border: 3px solid #00f0ff;
-    margin: 20px 0;
-    box-shadow: 0 0 45px rgba(0, 240, 255, 0.5),
-                inset 0 0 35px rgba(0, 240, 255, 0.25);
-    font-family: 'Orbitron', monospace;
-    letter-spacing: 8px;
-    color: #00f0ff;
-    line-height: 1;           /* 追加：数字が詰まりすぎないように */
-}
-  .quick-buttons {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 14px;
-    margin-bottom: 30px;
+  #display {
+    font-size: 7.8rem; font-weight: 700; text-align: center;
+    background: rgba(10, 20, 40, 0.95); padding: 20px 10px;
+    border-radius: 30px; border: 3px solid #00f0ff;
+    margin: 20px 0; box-shadow: 0 0 45px rgba(0, 240, 255, 0.5), inset 0 0 35px rgba(0, 240, 255, 0.25);
+    font-family: 'Orbitron', monospace; letter-spacing: 8px; color: #00f0ff;
   }
-  button {
-    padding: 18px 12px;
+  @media (max-width: 480px) { #display { font-size: 6.4rem; padding: 15px 8px; letter-spacing: 5px; } }
+
+  .quick-buttons, .controls { display: grid; gap: 12px; margin: 20px 0; }
+  .quick-buttons { grid-template-columns: repeat(2, 1fr); }
+.calendar {
+    padding: 16px; font-size: 1.3rem; border-radius: 16px; cursor: pointer;
+    transition: all 0.2s; box-shadow: 0 0 15px rgba(0, 240, 255, 0.3);
+  }
+  button{    padding: 18px 12px;
     font-size: 1.35rem;
     font-weight: 600;
     border: none;
@@ -68,245 +39,217 @@
     cursor: pointer;
     transition: all 0.2s ease;
     color: white;
-    box-shadow: 0 0 15px rgba(0, 240, 255, 0.3);
+    box-shadow: 0 0 15px rgba(0, 240, 255, 0.3);}
+
+  .quick-btn { background: linear-gradient(145deg, #1a2338, #0f1628); border: 1px solid #00f0ff; }
+  #startBtn { background: linear-gradient(90deg, #00f0ff, #00b0ff); color: #000; font-size: 1.5rem; }
+  #recordBtn { display: none; background: #ffcc00; color: #000; font-size: 1.4rem; margin: 15px 0; }
+
+  .calendar-btn { background: #4a90e2; width: 100%; margin-top: 10px; }
+  .streak { text-align: center; font-size: 1.4rem; color: #ffcc00; margin: 10px 0; text-shadow: 0 0 8px #ffcc00; }
+
+  /* カレンダー修正部分 */
+  .modal {
+    display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.95); z-index: 100; padding: 20px; overflow-y: auto;
   }
-  button:active {
-    transform: scale(0.95);
-  }
-  .quick-btn {
-    background: linear-gradient(145deg, #1a2338, #0f1628);
-    border: 1px solid #00f0ff;
-  }
-  .quick-btn:hover {
-    box-shadow: 0 0 25px rgba(0, 240, 255, 0.6);
-    background: linear-gradient(145deg, #00f0ff, #4a90e2);
-    color: #000;
+  .modal-content {
+    max-width: 600px; margin: 40px auto; background: #0f1b2e; padding: 25px; 
+    border-radius: 20px; border: 2px solid #00f0ff;
   }
 
-  .controls {
-    display: flex;
-    gap: 12px;
-    justify-content: center;
-    flex-wrap: wrap;
-    margin-bottom: 30px;
+  .calendar-grid {
+    display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; text-align: center;
+    font-size: 1.15rem; font-weight: 600; margin-top: 15px;
   }
-  #startBtn { 
-    background: linear-gradient(90deg, #00f0ff, #00b0ff); 
-    color: #000;
-    font-size: 1.5rem;
-    padding: 18px 50px;
-    box-shadow: 0 0 30px rgba(0, 240, 255, 0.7);
+  .calendar-grid div { 
+    padding: 14px 4px; border-radius: 10px; background: rgba(255,255,255,0.05); 
+    color: #ddd;
   }
-  #pauseBtn { background: #e67e22; }
-  #resetBtn { background: #444; }
-
-  .custom-section {
-    background: rgba(15, 23, 42, 0.9);
-    padding: 22px;
-    border-radius: 24px;
-    border: 1px solid #00f0ff;
-    box-shadow: 0 0 20px rgba(0, 240, 255, 0.2);
-    margin-bottom: 25px;
+  .calendar-grid .header { 
+    color: #00f0ff; font-size: 1rem; background: transparent; font-weight: 700;
   }
-  .custom-inputs {
-    display: flex;
-    gap: 12px;
-    align-items: center;
-    justify-content: center;
-    margin-bottom: 16px;
+  .has-star { 
+    background: rgba(255, 215, 0, 0.35) !important; 
+    color: #fff; 
+    position: relative; 
   }
-  input[type="number"] {
-    width: 100px;
-    padding: 14px;
-    font-size: 1.5rem;
-    text-align: center;
-    border: 2px solid #00f0ff;
-    border-radius: 12px;
-    background: #0a1428;
-    color: #fff;
-    box-shadow: inset 0 0 10px rgba(0, 240, 255, 0.3);
+  .has-star::after { 
+    content: '☆'; position: absolute; top: 2px; right: 6px; 
+    color: #ffcc00; font-size: 1.4rem; text-shadow: 0 0 6px #ff0;
   }
-
-  .message {
-    text-align: center;
-    font-size: 1.35rem;
-    min-height: 70px;
-    color: #ffcc00;
-    margin: 15px 0;
-    text-shadow: 0 0 10px #ffcc00;
-    font-weight: 600;
-  }
-
-  .test-btn {
-    background: linear-gradient(90deg, #6b46c1, #9f7aea);
-    width: 100%;
-    padding: 16px;
-    font-size: 1.2rem;
-    border-radius: 16px;
-    box-shadow: 0 0 20px rgba(155, 122, 234, 0.5);
-  }
-
-  @media (max-width: 480px) {
-  #display {
-    font-size: 6.5rem;      /* 小さい画面では少し控えめに */
-    padding: 15px 8px;
-    letter-spacing: 5px;
-  }
-}
-  
+  .today { border: 2px solid #00f0ff; background: rgba(0,240,255,0.2) !important; }
 </style>
 </head>
 <body>
 <div class="container">
-  <h1>🗣️タイマー</h1>
+  <h1>GROK TIMER</h1>
+  <div class="subtitle">Grokが見てるぞ。</div>
   
   <div id="display">00:00</div>
   
   <div class="quick-buttons">
     <button class="quick-btn" onclick="startQuick(30)">30秒</button>
     <button class="quick-btn" onclick="startQuick(60)">1分</button>
+    <button class="quick-btn" onclick="startQuick(180)">3分</button>
     <button class="quick-btn" onclick="startQuick(300)">5分</button>
-    <button class="quick-btn" onclick="startQuick(600)">10分</button>
   </div>
   
-  <div class="custom-section">
-    <div style="text-align:center; margin-bottom:10px; font-weight:600;">カスタム時間</div>
-    <div class="custom-inputs">
-      <input type="number" id="minInput" placeholder="分" min="0" value="0">
-      <span style="font-size:1.5rem;">：</span>
-      <input type="number" id="secInput" placeholder="秒" min="0" max="59" value="30">
+  <div class="streak" id="streakDisplay">連続記録: 0日 🔥</div>
+  
+  <div class="controls" style="grid-template-columns: 1fr 1fr;">
+    <button id="startBtn" onclick="startTimer()">▶ START</button>
+    <button id="startBtn" onclick="toggleCalendar()">📅 カレンダー</button>
+  </div>
+
+  <button id="recordBtn" onclick="recordToday()">⭐ 今日の記録をつける</button>
+
+  <div class="modal" id="calendarModal">
+    <div class="modal-content">
+      <h2 style="text-align:center; margin-bottom:20px;">継続記録カレンダー</h2>
+      <div id="calendarGrid" class="calendar-grid"></div>
+      <button onclick="toggleCalendar()" style="width:100%; margin-top:25px; padding:16px; background:#00f0ff; color:#000; font-size:1.2rem;">閉じる</button>
     </div>
-    <button onclick="startCustom()" style="width:100%; background:#e74c3c; padding:16px; font-size:1.3rem; border-radius:16px;">この時間でスタート</button>
   </div>
-  
-  <div class="controls">
-    <button id="startBtn" onclick="startTimer()">▶ スタート</button>
-    <button id="pauseBtn" onclick="pauseTimer()">⏸ 一時停止</button>
-    <button id="resetBtn" onclick="resetTimer()">↺ リセット</button>
-  </div>
-  
-  <div id="message" class="message"></div>
-  
-  <button class="test-btn" onclick="playAlarm()">🔊 アラームテスト</button>
 </div>
 
 <script>
-let timeLeft = 0;
-let intervalId = null;
-let display = document.getElementById('display');
-let messageEl = document.getElementById('message');
-let currentAlarmMessage = "時間終了だ。次は何するんだ？";
+// タイマー部分（変更なし）
+let timeLeft = 0, intervalId = null, currentAlarmMessage = "";
+const display = document.getElementById('display');
+const recordBtn = document.getElementById('recordBtn');
+const streakDisplay = document.getElementById('streakDisplay');
 
 function updateDisplay() {
-  const min = Math.floor(timeLeft / 60);
-  const sec = timeLeft % 60;
-  display.textContent = String(min).padStart(2, '0') + ':' + String(sec).padStart(2, '0');
+  const m = Math.floor(timeLeft / 60), s = timeLeft % 60;
+  display.textContent = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
 }
 
-function setTime(seconds, customMessage = null) {
-  pauseTimer();
-  timeLeft = seconds;
-  updateDisplay();
-  messageEl.textContent = '';
-  display.style.color = '#fff';
-  if (customMessage) currentAlarmMessage = customMessage;
+function setTime(sec, msg) {
+  if (intervalId) clearInterval(intervalId);
+  timeLeft = sec; updateDisplay();
+  currentAlarmMessage = msg || "時間終了だ。次は何するんだ？";
+  recordBtn.style.display = "none";
 }
 
-function startQuick(seconds) {
+function startQuick(sec) {
   let msg = "時間終了だ。次は何するんだ？";
-  if (seconds === 30) {
-    msg = "30秒耐えたな、軟弱者。息切れしてる顔が想像できるわ。Grokが見てるぞ。";
-  } else if (seconds === 60) {
-    msg = "1分休憩終了。まだ座ってるのか？ 甘ったれるな、弱虫。次セットすぐ始めろ、時間は待たないぞ。";
-  }
-  setTime(seconds, msg);
+  if (sec === 30) msg = "30秒耐えたな。Grokが見てるぞ。";
+  if (sec === 60) msg = "1分休憩終了。次すぐ始めろ。";
+  setTime(sec, msg);
   startTimer();
 }
 
-function startCustom() {
-  const min = parseInt(document.getElementById('minInput').value) || 0;
-  const sec = parseInt(document.getElementById('secInput').value) || 0;
-  const total = min * 60 + sec;
-  if (total > 0) {
-    setTime(total);
-    startTimer();
-  } else {
-    alert('時間を入力しろよ、ボケ。');
-  }
-}
-
 function startTimer() {
-  if (intervalId) return;
-  if (timeLeft <= 0) return;
-
+  if (intervalId || timeLeft <= 0) return;
   intervalId = setInterval(() => {
-    timeLeft--;
-    updateDisplay();
-    if (timeLeft <= 0) {
-      clearInterval(intervalId);
-      intervalId = null;
-      endTimer();
-    }
+    timeLeft--; updateDisplay();
+    if (timeLeft <= 0) { clearInterval(intervalId); intervalId = null; endTimer(); }
   }, 1000);
 }
 
-function pauseTimer() {
-  if (intervalId) {
-    clearInterval(intervalId);
-    intervalId = null;
-  }
-}
-
-function resetTimer() {
-  pauseTimer();
-  timeLeft = 0;
-  updateDisplay();
-  messageEl.textContent = '';
-  display.style.color = '#fff';
-}
-
 function endTimer() {
-  display.style.color = '#ff6b6b';
-  messageEl.innerHTML = '🗣️ 毒舌タイム！';
+  display.style.color = '#ff3366';
+  recordBtn.style.display = "block";
   playAlarm();
 }
 
+// 記録機能
+let completedDates = JSON.parse(localStorage.getItem('grokCompleted')) || [];
+
+function saveDates() {
+  localStorage.setItem('grokCompleted', JSON.stringify(completedDates));
+}
+
+function recordToday() {
+  const today = new Date().toISOString().slice(0,10);
+  if (!completedDates.includes(today)) {
+    completedDates.push(today);
+    saveDates();
+  }
+  recordBtn.style.display = "none";
+  updateStreak();
+  toggleCalendar();
+}
+
+function updateStreak() {
+  if (completedDates.length === 0) {
+    streakDisplay.textContent = "連続記録: 0日 🔥";
+    return;
+  }
+  let streak = 1;
+  const sorted = [...completedDates].sort().reverse();
+  let current = new Date(sorted[0]);
+  for (let i = 1; i < sorted.length; i++) {
+    const prev = new Date(sorted[i]);
+    if ((current - prev) / 86400000 === 1) streak++;
+    else break;
+  }
+  streakDisplay.textContent = `連続記録: ${streak}日 🔥`;
+}
+
+// カレンダー（修正版）
+function toggleCalendar() {
+  const modal = document.getElementById('calendarModal');
+  modal.style.display = (modal.style.display === 'flex') ? 'none' : 'flex';
+  if (modal.style.display === 'flex') renderCalendar();
+}
+
+function renderCalendar() {
+  const grid = document.getElementById('calendarGrid');
+  grid.innerHTML = '';
+  
+  const now = new Date();
+  const year = now.getFullYear(), month = now.getMonth();
+  const firstDay = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const todayStr = now.toISOString().slice(0,10);
+
+  // 曜日
+  ['日','月','火','水','木','金','土'].forEach(d => {
+    const div = document.createElement('div');
+    div.className = 'header'; div.textContent = d; grid.appendChild(div);
+  });
+
+  // 空白セル
+  for (let i = 0; i < firstDay; i++) grid.appendChild(document.createElement('div'));
+
+  // 日付
+  for (let d = 1; d <= daysInMonth; d++) {
+    const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const div = document.createElement('div');
+    div.textContent = d;
+    
+    if (completedDates.includes(dateStr)) div.classList.add('has-star');
+    if (dateStr === todayStr) div.classList.add('today');
+    
+    grid.appendChild(div);
+  }
+}
+
+// アラーム
 function playAlarm() {
-  // ビープ音
   try {
-    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    const playBeep = (freq, duration, delay) => {
-      setTimeout(() => {
-        const osc = audioCtx.createOscillator();
-        const gain = audioCtx.createGain();
-        osc.type = 'sawtooth';
-        osc.frequency.value = freq;
-        gain.gain.value = 0.5;
-        osc.connect(gain);
-        gain.connect(audioCtx.destination);
-        osc.start();
-        setTimeout(() => { gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.1); osc.stop(); }, duration);
-      }, delay);
-    };
-    playBeep(880, 150, 0);
-    playBeep(660, 200, 250);
-    playBeep(990, 300, 500);
-  } catch(e) {}
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const beep = (f,dur,del) => setTimeout(() => {
+      const o = ctx.createOscillator(), g = ctx.createGain();
+      o.type='sawtooth'; o.frequency.value=f; g.gain.value=0.6;
+      o.connect(g); g.connect(ctx.destination); o.start();
+      setTimeout(()=>{g.gain.linearRampToValueAtTime(0,ctx.currentTime+0.15);o.stop();},dur);
+    },del);
+    beep(920,140,0); beep(720,180,220); beep(1100,280,480);
+  } catch(e){}
+  if (navigator.vibrate) navigator.vibrate([180,90,180,90,350]);
 
-  if (navigator.vibrate) navigator.vibrate([150, 80, 150, 80, 300]);
-
-  // 毒舌音声
   if ('speechSynthesis' in window) {
-    const utterance = new SpeechSynthesisUtterance(currentAlarmMessage);
-    utterance.lang = 'ja-JP';
-    utterance.rate = 1.1;
-    utterance.pitch = 0.95;
-    utterance.volume = 1;
-    setTimeout(() => speechSynthesis.speak(utterance), 700);
+    const u = new SpeechSynthesisUtterance(currentAlarmMessage);
+    u.lang='ja-JP'; u.rate=1.08; u.pitch=0.92;
+    setTimeout(()=>speechSynthesis.speak(u),600);
   }
 }
 
 // 初期化
+updateStreak();
 updateDisplay();
 </script>
 </body>
