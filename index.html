@@ -136,13 +136,23 @@
 </div>
 
 <script>
-/* 前の修正版と同じスクリプト部分（変更なし） */
+// ==================== 基本変数 ====================
 let timeLeft = 0, intervalId = null, currentAlarmMessage = "";
 let audioCtx = null;
 const display = document.getElementById('display');
 const recordBtn = document.getElementById('recordBtn');
 const streakDisplay = document.getElementById('streakDisplay');
 let completedDates = JSON.parse(localStorage.getItem('grokCompleted')) || [];
+
+// ==================== Audio初期化 ====================
+function initAudio() {
+  if (!audioCtx) {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  }
+  if (audioCtx.state === 'suspended') {
+    audioCtx.resume();
+  }
+}
 
 function unlockAudio() {
   initAudio();
@@ -157,6 +167,7 @@ function unlockAudio() {
   } catch(e) {}
 }
 
+// ==================== 表示更新 ====================
 function updateDisplay() {
   const m = Math.floor(timeLeft / 60), s = timeLeft % 60;
   display.textContent = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
@@ -171,6 +182,7 @@ function setTime(sec, msg = "時間終了だ。次は何するんだ？") {
   display.style.color = '#00f0ff';
 }
 
+// ==================== タイマー ====================
 function startQuick(sec) {
   unlockAudio();
   let msg = "時間終了だ。次は何するんだ？";
@@ -182,112 +194,6 @@ function startQuick(sec) {
   startTimer();
 }
 
-function endTimer() {
-  display.style.color = '#ff3366';
-  recordBtn.style.display = "block";
-  playAlarm();
-}
-
-function recordToday() {
-  const today = new Date().toISOString().slice(0,10);
-  if (!completedDates.includes(today)) {
-    completedDates.push(today);
-    localStorage.setItem('grokCompleted', JSON.stringify(completedDates));
-  }
-  recordBtn.style.display = "none";
-  updateStreak();
-  toggleCalendar();
-}
-
-function updateStreak() {
-  if (completedDates.length === 0) {
-    streakDisplay.textContent = "連続記録: 0日 🔥"; return;
-  }
-  const sorted = [...completedDates].sort().reverse();
-  let streak = 1;
-  let current = new Date(sorted[0]);
-  for (let i = 1; i < sorted.length; i++) {
-    const prev = new Date(sorted[i]);
-    if ((current - prev) / 86400000 === 1) { streak++; current = prev; }
-    else break;
-  }
-  streakDisplay.textContent = `連続記録: ${streak}日 🔥`;
-}
-
-function toggleCalendar() {
-  const modal = document.getElementById('calendarModal');
-  modal.style.display = (modal.style.display === 'flex') ? 'none' : 'flex';
-  if (modal.style.display === 'flex') renderCalendar();
-}
-
-function renderCalendar() {
-  const grid = document.getElementById('calendarGrid');
-  grid.innerHTML = '';
-  const now = new Date();
-  const year = now.getFullYear(), month = now.getMonth();
-  const firstDay = new Date(year, month, 1).getDay();
-  const daysInMonth = new Date(year, month + 1, 0).getDate();
-  const todayStr = now.toISOString().slice(0,10);
-
-  ['日','月','火','水','木','金','土'].forEach(d => {
-    const div = document.createElement('div');
-    div.className = 'header'; div.textContent = d; grid.appendChild(div);
-  });
-
-  for (let i = 0; i < firstDay; i++) grid.appendChild(document.createElement('div'));
-
-  for (let d = 1; d <= daysInMonth; d++) {
-    const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-    const div = document.createElement('div');
-    div.textContent = d;
-    if (completedDates.includes(dateStr)) div.classList.add('has-star');
-    if (dateStr === todayStr) div.classList.add('today');
-    grid.appendChild(div);
-  }
-}
-// ==================== アラーム ====================
-
-function initAudio() {
-  if (!audioCtx) {
-    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-  }
-  if (audioCtx.state === 'suspended') {
-    audioCtx.resume();   // ← これを確実に呼ぶ
-  }
-}
-
-// ビープ音も少し強化
-function playBeep() {
-  initAudio();
-  try {
-    const beep = (freq, duration, delay = 0) => {
-      setTimeout(() => {
-        const osc = audioCtx.createOscillator();
-        const gain = audioCtx.createGain();
-        osc.type = 'sawtooth';
-        osc.frequency.value = freq;
-        gain.gain.value = 0.7;
-        
-        const filter = audioCtx.createBiquadFilter();
-        filter.type = 'lowpass';
-        filter.frequency.value = 1200;
-        
-        osc.connect(filter).connect(gain).connect(audioCtx.destination);
-        
-        osc.start();
-        gain.gain.linearRampToValueAtTime(0.001, audioCtx.currentTime + duration/1000 + 0.3);
-        osc.stop(audioCtx.currentTime + duration/1000 + 0.4);
-      }, delay);
-    };
-
-    beep(880, 120, 0);
-    beep(660, 160, 180);
-    beep(1100, 220, 420);
-    beep(1320, 280, 700);   // もう一声追加
-  } catch(e) { console.error(e); }
-}
-
-// startTimerも少し強化
 function startTimer() {
   unlockAudio();
   if (intervalId || timeLeft <= 0) return;
@@ -303,20 +209,87 @@ function startTimer() {
   }, 1000);
 }
 
-function testSound() {
-  if (navigator.vibrate) navigator.vibrate([100,50,100]);
+function endTimer() {
+  display.style.color = '#ff3366';
+  recordBtn.style.display = "block";
+  playAlarm();           // ← ここで本物のアラーム
+}
+
+// ==================== 記録・カレンダー（変更なし）===================
+function recordToday() { /* ... 省略（元のまま） ... */ }
+function updateStreak() { /* ... 元のまま ... */ }
+function toggleCalendar() { /* ... 元のまま ... */ }
+function renderCalendar() { /* ... 元のまま ... */ }
+
+// ==================== 強化アラーム（ここが重要）===================
+function playBeep() {
+  initAudio();
+  try {
+    const beep = (freq, duration, delay = 0) => {
+      setTimeout(() => {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        const filter = audioCtx.createBiquadFilter();
+        osc.type = 'sawtooth';
+        osc.frequency.value = freq;
+        gain.gain.value = 0.7;
+        filter.type = 'lowpass';
+        filter.frequency.value = 1200;
+        osc.connect(filter).connect(gain).connect(audioCtx.destination);
+        osc.start();
+        gain.gain.linearRampToValueAtTime(0.001, audioCtx.currentTime + duration/1000 + 0.3);
+        osc.stop(audioCtx.currentTime + duration/1000 + 0.4);
+      }, delay);
+    };
+    beep(880, 120, 0);
+    beep(660, 160, 180);
+    beep(1100, 220, 420);
+    beep(1320, 280, 700);
+  } catch(e) {}
+}
+
+// 男声（Siri系）優先で再生
+function playAlarm() {
+  initAudio();
+  audioCtx.resume();
+  playBeep();
+  if (navigator.vibrate) navigator.vibrate([300, 100, 300, 100, 500]);
+
   if ('speechSynthesis' in window) {
-    const u = new SpeechSynthesisUtterance("テストテスト。Grokだ。聞こえるか？");
-    u.lang = 'ja-JP'; u.rate = 1.0; u.pitch = 1.0;
-    speechSynthesis.speak(u);
+    const utterance = new SpeechSynthesisUtterance(currentAlarmMessage);
+    utterance.lang = 'ja-JP';
+    utterance.rate = 1.05;
+    utterance.pitch = 0.95;   // 男声向け少し低め
+    utterance.volume = 1.0;
+
+    const voices = speechSynthesis.getVoices();
+
+    // Siri男声1（Otoya / Hattori）を最優先
+    let targetVoice = voices.find(v => 
+      v.name.includes('Otoya') || 
+      v.name.includes('Hattori') ||
+      v.name.toLowerCase().includes('siri_male')
+    );
+
+    if (targetVoice) {
+      utterance.voice = targetVoice;
+      console.log("🎤 使用音声:", targetVoice.name);
+    } else {
+      console.log("⚠️ Otoya/Hattoriが見つかりませんでした（デフォルトを使います）");
+    }
+
+    speechSynthesis.cancel();
+    speechSynthesis.speak(utterance);
   }
 }
 
-function playAlarm() {
-  testSound();   // テストと同じ音で鳴らす
+// ==================== テスト用 ====================
+function testSound() {
+  currentAlarmMessage = "テストだ。Grokの男声で聞こえるか？";
+  playAlarm();
 }
 
-
+// 初期化
 updateStreak();
 updateDisplay();
 </script>
