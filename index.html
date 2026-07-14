@@ -176,13 +176,15 @@ function setTime(sec, msg = "時間終了だ。次は何するんだ？") {
 }
 
 // ==================== タイマー ====================
-function startQuick(sec) { unlockAudio(); 
+function startQuick(sec) { 
+  unlockAudio(); 
   let msg = "時間終了だ。次は何するんだ？";
   if (sec===30) msg="30秒耐えたな、軟弱者。";
   if (sec===60) msg="1分休憩終了。次セットすぐ始めろ。";
   if (sec===180) msg="3分集中したな。まだまだいけるぞ。";
   if (sec===300) msg="5分お疲れ。Grokは褒めてやる。";
-  setTime(sec, msg); startTimer();
+  setTime(sec, msg); 
+  startTimer();
 }
 
 function startTimer() {
@@ -202,7 +204,7 @@ function endTimer() {
   playAlarm();
 }
 
-// ==================== 記録・カレンダー（省略）===================
+// ==================== 記録 ====================
 function recordToday() {
   const today = new Date().toISOString().slice(0,10);
   if (!completedDates.includes(today)) {
@@ -213,30 +215,29 @@ function recordToday() {
   updateStreak();
   toggleCalendar();
 }
-                        
-function updateStreak() {function updateStreak() {
+
+function updateStreak() {
   if (completedDates.length === 0) {
-    streakDisplay.textContent = "連続記録: 0日 "; return;
+    streakDisplay.textContent = "連続記録: 0日 🔥"; 
+    return;
   }
   const sorted = [...completedDates].sort().reverse();
   let streak = 1;
   let current = new Date(sorted[0]);
   for (let i = 1; i < sorted.length; i++) {
     const prev = new Date(sorted[i]);
-    if ((current - prev) / 86400000 === 1) { streak++; current = prev; }
-    else break;
+    if ((current - prev) / 86400000 === 1) { 
+      streak++; current = prev; 
+    } else break;
   }
-  streakDisplay.textContent = 連続記録 ${streak}日 ;
+  streakDisplay.textContent = `連続記録: ${streak}日 🔥`;
 }
 
-}
-  
 function toggleCalendar() {
   const modal = document.getElementById('calendarModal');
   modal.style.display = (modal.style.display === 'flex') ? 'none' : 'flex';
   if (modal.style.display === 'flex') renderCalendar();
 }
-
 
 function renderCalendar() {
   const grid = document.getElementById('calendarGrid');
@@ -245,11 +246,17 @@ function renderCalendar() {
   const year = now.getFullYear(), month = now.getMonth();
   const firstDay = new Date(year, month, 1).getDay();
   const daysInMonth = new Date(year, month + 1, 0).getDate();
-  const todayStr = now.toISOString().slice(0,10);  ['日','月','火','水','木','金','土'].forEach(d => {
+  const todayStr = now.toISOString().slice(0,10);
+
+  ['日','月','火','水','木','金','土'].forEach(d => {
     const div = document.createElement('div');
     div.className = 'header'; div.textContent = d; grid.appendChild(div);
-  });  for (let i = 0; i < firstDay; i++) grid.appendChild(document.createElement('div'));  for (let d = 1; d <= daysInMonth; d++) {
-    const dateStr = ${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')};
+  });
+
+  for (let i = 0; i < firstDay; i++) grid.appendChild(document.createElement('div'));
+
+  for (let d = 1; d <= daysInMonth; d++) {
+    const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
     const div = document.createElement('div');
     div.textContent = d;
     if (completedDates.includes(dateStr)) div.classList.add('has-star');
@@ -258,9 +265,7 @@ function renderCalendar() {
   }
 }
 
-
-
-// ==================== ビープ音（強化）===================
+// ==================== ビープ音 ====================
 function playBeep() {
   initAudio();
   try {
@@ -278,7 +283,7 @@ function playBeep() {
   } catch(e) { console.error("ビープエラー", e); }
 }
 
-// ==================== 男声アラーム（最重要修正）===================
+// ==================== 男声アラーム ====================
 function playAlarm() {
   console.log("🚀 playAlarm 開始");
   initAudio();
@@ -297,17 +302,14 @@ function playAlarm() {
   utterance.rate = 1.06;
   utterance.pitch = 0.92;
 
-  // 音声ロード待機
   function loadAndSpeak() {
     const voices = speechSynthesis.getVoices();
     console.log("📋 利用可能音声数:", voices.length);
 
-    // 優先：Otoya → Hattori → 男声
     let maleVoice = voices.find(v => v.name.includes("Otoya")) ||
                     voices.find(v => v.name.includes("Hattori")) ||
                     voices.find(v => v.lang === "ja-JP" && 
-                      (v.name.toLowerCase().includes("male") || 
-                       v.name.includes("男")));
+                      (v.name.toLowerCase().includes("male") || v.name.includes("男")));
 
     if (maleVoice) {
       utterance.voice = maleVoice;
@@ -321,7 +323,6 @@ function playAlarm() {
     speechSynthesis.speak(utterance);
   }
 
-  // 即時 or 待機
   if (speechSynthesis.getVoices().length > 0) {
     loadAndSpeak();
   } else {
