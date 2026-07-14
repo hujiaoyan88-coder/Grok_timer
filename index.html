@@ -203,10 +203,62 @@ function endTimer() {
 }
 
 // ==================== 記録・カレンダー（省略）===================
-function recordToday() { /* 元のまま */ }
-function updateStreak() { /* 元のまま */ }
-function toggleCalendar() { /* 元のまま */ }
-function renderCalendar() { /* 元のまま */ }
+function recordToday() {
+  const today = new Date().toISOString().slice(0,10);
+  if (!completedDates.includes(today)) {
+    completedDates.push(today);
+    localStorage.setItem('grokCompleted', JSON.stringify(completedDates));
+  }
+  recordBtn.style.display = "none";
+  updateStreak();
+  toggleCalendar();
+}
+                        
+function updateStreak() {function updateStreak() {
+  if (completedDates.length === 0) {
+    streakDisplay.textContent = "連続記録: 0日 "; return;
+  }
+  const sorted = [...completedDates].sort().reverse();
+  let streak = 1;
+  let current = new Date(sorted[0]);
+  for (let i = 1; i < sorted.length; i++) {
+    const prev = new Date(sorted[i]);
+    if ((current - prev) / 86400000 === 1) { streak++; current = prev; }
+    else break;
+  }
+  streakDisplay.textContent = 連続記録: ${streak}日 ;
+}
+
+}
+  
+function toggleCalendar() {
+  const modal = document.getElementById('calendarModal');
+  modal.style.display = (modal.style.display === 'flex') ? 'none' : 'flex';
+  if (modal.style.display === 'flex') renderCalendar();
+}
+
+
+function renderCalendar() {
+  const grid = document.getElementById('calendarGrid');
+  grid.innerHTML = '';
+  const now = new Date();
+  const year = now.getFullYear(), month = now.getMonth();
+  const firstDay = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const todayStr = now.toISOString().slice(0,10);  ['日','月','火','水','木','金','土'].forEach(d => {
+    const div = document.createElement('div');
+    div.className = 'header'; div.textContent = d; grid.appendChild(div);
+  });  for (let i = 0; i < firstDay; i++) grid.appendChild(document.createElement('div'));  for (let d = 1; d <= daysInMonth; d++) {
+    const dateStr = ${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')};
+    const div = document.createElement('div');
+    div.textContent = d;
+    if (completedDates.includes(dateStr)) div.classList.add('has-star');
+    if (dateStr === todayStr) div.classList.add('today');
+    grid.appendChild(div);
+  }
+}
+
+
 
 // ==================== ビープ音（強化）===================
 function playBeep() {
