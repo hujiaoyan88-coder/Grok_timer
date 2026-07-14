@@ -136,7 +136,7 @@
 </div>
 
 <script>
-// ==================== 基本変数 ====================
+// ==================== 変数 ====================
 let timeLeft = 0, intervalId = null, currentAlarmMessage = "";
 let audioCtx = null;
 const display = document.getElementById('display');
@@ -144,14 +144,10 @@ const recordBtn = document.getElementById('recordBtn');
 const streakDisplay = document.getElementById('streakDisplay');
 let completedDates = JSON.parse(localStorage.getItem('grokCompleted')) || [];
 
-// ==================== Audio初期化 ====================
+// ==================== Audio ====================
 function initAudio() {
-  if (!audioCtx) {
-    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-  }
-  if (audioCtx.state === 'suspended') {
-    audioCtx.resume();
-  }
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
 }
 
 function unlockAudio() {
@@ -159,15 +155,13 @@ function unlockAudio() {
   try {
     const o = audioCtx.createOscillator();
     const g = audioCtx.createGain();
-    o.frequency.value = 1;
-    g.gain.value = 0.001;
+    o.frequency.value = 1; g.gain.value = 0.001;
     o.connect(g).connect(audioCtx.destination);
-    o.start();
-    o.stop(audioCtx.currentTime + 0.01);
+    o.start(); o.stop(audioCtx.currentTime + 0.01);
   } catch(e) {}
 }
 
-// ==================== 表示更新 ====================
+// ==================== 表示 ====================
 function updateDisplay() {
   const m = Math.floor(timeLeft / 60), s = timeLeft % 60;
   display.textContent = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
@@ -175,36 +169,29 @@ function updateDisplay() {
 
 function setTime(sec, msg = "時間終了だ。次は何するんだ？") {
   if (intervalId) clearInterval(intervalId);
-  timeLeft = sec;
-  currentAlarmMessage = msg;
+  timeLeft = sec; currentAlarmMessage = msg;
   updateDisplay();
   recordBtn.style.display = "none";
   display.style.color = '#00f0ff';
 }
 
 // ==================== タイマー ====================
-function startQuick(sec) {
-  unlockAudio();
+function startQuick(sec) { unlockAudio(); 
   let msg = "時間終了だ。次は何するんだ？";
-  if (sec === 30) msg = "30秒耐えたな、軟弱者。";
-  if (sec === 60) msg = "1分休憩終了。次セットすぐ始めろ。";
-  if (sec === 180) msg = "3分集中したな。まだまだいけるぞ。";
-  if (sec === 300) msg = "5分お疲れ。Grokは褒めてやる。";
-  setTime(sec, msg);
-  startTimer();
+  if (sec===30) msg="30秒耐えたな、軟弱者。";
+  if (sec===60) msg="1分休憩終了。次セットすぐ始めろ。";
+  if (sec===180) msg="3分集中したな。まだまだいけるぞ。";
+  if (sec===300) msg="5分お疲れ。Grokは褒めてやる。";
+  setTime(sec, msg); startTimer();
 }
 
 function startTimer() {
   unlockAudio();
   if (intervalId || timeLeft <= 0) return;
-  
   intervalId = setInterval(() => {
-    timeLeft--;
-    updateDisplay();
+    timeLeft--; updateDisplay();
     if (timeLeft <= 0) {
-      clearInterval(intervalId);
-      intervalId = null;
-      endTimer();
+      clearInterval(intervalId); intervalId = null; endTimer();
     }
   }, 1000);
 }
@@ -212,86 +199,98 @@ function startTimer() {
 function endTimer() {
   display.style.color = '#ff3366';
   recordBtn.style.display = "block";
-  playAlarm();           // ← ここで本物のアラーム
+  playAlarm();
 }
 
-// ==================== 記録・カレンダー（変更なし）===================
-function recordToday() { /* ... 省略（元のまま） ... */ }
-function updateStreak() { /* ... 元のまま ... */ }
-function toggleCalendar() { /* ... 元のまま ... */ }
-function renderCalendar() { /* ... 元のまま ... */ }
+// ==================== 記録・カレンダー（省略）===================
+function recordToday() { /* 元のまま */ }
+function updateStreak() { /* 元のまま */ }
+function toggleCalendar() { /* 元のまま */ }
+function renderCalendar() { /* 元のまま */ }
 
-// ==================== 強化アラーム（ここが重要）===================
+// ==================== ビープ音（強化）===================
 function playBeep() {
   initAudio();
   try {
-    const beep = (freq, duration, delay = 0) => {
-      setTimeout(() => {
-        const osc = audioCtx.createOscillator();
-        const gain = audioCtx.createGain();
-        const filter = audioCtx.createBiquadFilter();
-        osc.type = 'sawtooth';
-        osc.frequency.value = freq;
-        gain.gain.value = 0.7;
-        filter.type = 'lowpass';
-        filter.frequency.value = 1200;
-        osc.connect(filter).connect(gain).connect(audioCtx.destination);
-        osc.start();
-        gain.gain.linearRampToValueAtTime(0.001, audioCtx.currentTime + duration/1000 + 0.3);
-        osc.stop(audioCtx.currentTime + duration/1000 + 0.4);
-      }, delay);
-    };
-    beep(880, 120, 0);
-    beep(660, 160, 180);
-    beep(1100, 220, 420);
-    beep(1320, 280, 700);
-  } catch(e) {}
+    const beep = (freq, dur, delay=0) => setTimeout(() => {
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'sawtooth'; osc.frequency.value = freq;
+      gain.gain.value = 0.75;
+      osc.connect(gain).connect(audioCtx.destination);
+      osc.start();
+      gain.gain.linearRampToValueAtTime(0.001, audioCtx.currentTime + dur/1000 + 0.2);
+      osc.stop(audioCtx.currentTime + dur/1000 + 0.3);
+    }, delay);
+    beep(880,150,0); beep(660,200,150); beep(1100,250,400); beep(1320,300,650);
+  } catch(e) { console.error("ビープエラー", e); }
 }
 
-// 男声（Siri系）優先で再生
+// ==================== 男声アラーム（最重要修正）===================
 function playAlarm() {
+  console.log("🚀 playAlarm 開始");
   initAudio();
   audioCtx.resume();
   playBeep();
-  if (navigator.vibrate) navigator.vibrate([300, 100, 300, 100, 500]);
 
-  if ('speechSynthesis' in window) {
-    const utterance = new SpeechSynthesisUtterance(currentAlarmMessage);
-    utterance.lang = 'ja-JP';
-    utterance.rate = 1.05;
-    utterance.pitch = 0.95;   // 男声向け少し低め
-    utterance.volume = 1.0;
+  if (navigator.vibrate) navigator.vibrate([300,80,300,80,400]);
 
+  if (!('speechSynthesis' in window)) {
+    console.log("❌ SpeechSynthesis 非対応");
+    return;
+  }
+
+  const utterance = new SpeechSynthesisUtterance(currentAlarmMessage);
+  utterance.lang = 'ja-JP';
+  utterance.rate = 1.06;
+  utterance.pitch = 0.92;
+
+  // 音声ロード待機
+  function loadAndSpeak() {
     const voices = speechSynthesis.getVoices();
+    console.log("📋 利用可能音声数:", voices.length);
 
-    // Siri男声1（Otoya / Hattori）を最優先
-    let targetVoice = voices.find(v => 
-      v.name.includes('Otoya') || 
-      v.name.includes('Hattori') ||
-      v.name.toLowerCase().includes('siri_male')
-    );
+    // 優先：Otoya → Hattori → 男声
+    let maleVoice = voices.find(v => v.name.includes("Otoya")) ||
+                    voices.find(v => v.name.includes("Hattori")) ||
+                    voices.find(v => v.lang === "ja-JP" && 
+                      (v.name.toLowerCase().includes("male") || 
+                       v.name.includes("男")));
 
-    if (targetVoice) {
-      utterance.voice = targetVoice;
-      console.log("🎤 使用音声:", targetVoice.name);
+    if (maleVoice) {
+      utterance.voice = maleVoice;
+      console.log("✅ 男声使用 →", maleVoice.name);
     } else {
-      console.log("⚠️ Otoya/Hattoriが見つかりませんでした（デフォルトを使います）");
+      console.log("⚠️ 男声が見つからず。利用可能なja-JP音声:", 
+        voices.filter(v => v.lang.includes("ja")).map(v=>v.name));
     }
 
     speechSynthesis.cancel();
     speechSynthesis.speak(utterance);
   }
+
+  // 即時 or 待機
+  if (speechSynthesis.getVoices().length > 0) {
+    loadAndSpeak();
+  } else {
+    console.log("⏳ 音声ロード待機中...");
+    speechSynthesis.onvoiceschanged = () => {
+      loadAndSpeak();
+      speechSynthesis.onvoiceschanged = null;
+    };
+  }
 }
 
-// ==================== テスト用 ====================
+// ==================== テスト ====================
 function testSound() {
-  currentAlarmMessage = "テストだ。Grokの男声で聞こえるか？";
+  currentAlarmMessage = "これは男声テスト。Grokの声で聞こえるか？";
   playAlarm();
 }
 
 // 初期化
 updateStreak();
 updateDisplay();
+console.log("✅ Grok Timer 初期化完了");
 </script>
 </body>
 </html>
