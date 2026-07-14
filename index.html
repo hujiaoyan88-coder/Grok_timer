@@ -122,6 +122,9 @@
   </div>
 
   <button id="recordBtn" onclick="recordToday()">⭐ 今日の記録をつける</button>
+  <button onclick="testSound()" style="width:100%; background:#ff3366; color:white; padding:18px; font-size:1.3rem; margin:15px 0;">
+🔊 音声テスト
+</button>
   
   <div class="modal" id="calendarModal">
     <div class="modal-content">
@@ -243,29 +246,6 @@ function renderCalendar() {
   }
 }
 // ==================== アラーム ====================
-function playBeep() {
-  initAudio();
-  try {
-    const beep = (freq, duration, delay) => {
-      setTimeout(() => {
-        const osc = audioCtx.createOscillator();
-        const gain = audioCtx.createGain();
-        osc.type = 'sawtooth';
-        osc.frequency.value = freq;
-        gain.gain.value = 0.6;
-        osc.connect(gain).connect(audioCtx.destination);
-        osc.start();
-        gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + duration/1000 + 0.1);
-        osc.stop(audioCtx.currentTime + duration/1000 + 0.2);
-      }, delay);
-    };
-    beep(880, 150, 0);
-    beep(660, 180, 220);
-    beep(1100, 280, 480);
-  } catch(e) {}
-}
-  
-// ...（上のコードは全部そのまま）...
 
 function initAudio() {
   if (!audioCtx) {
@@ -273,33 +253,6 @@ function initAudio() {
   }
   if (audioCtx.state === 'suspended') {
     audioCtx.resume();   // ← これを確実に呼ぶ
-  }
-}
-
-// 終了時のアラーム（これを強化）
-function playAlarm() {
-  initAudio();           // ← 毎回呼ぶ
-  audioCtx.resume();     // ← これが一番大事！
-
-  // ビープ音
-  playBeep();
-
-  // 振動
-  if (navigator.vibrate) navigator.vibrate([300, 100, 300, 100, 500]);
-
-  // 音声合成
-  if ('speechSynthesis' in window) {
-    const utterance = new SpeechSynthesisUtterance(currentAlarmMessage || "時間終了！");
-    utterance.lang = 'ja-JP';
-    utterance.rate = 1.08;
-    utterance.pitch = 0.95;
-    utterance.volume = 1;
-
-    // 少し遅らせて音声を再生（ブラウザ対策）
-    setTimeout(() => {
-      speechSynthesis.cancel(); // 前の発話を止める
-      speechSynthesis.speak(utterance);
-    }, 50);
   }
 }
 
@@ -349,6 +302,20 @@ function startTimer() {
     }
   }, 1000);
 }
+
+function testSound() {
+  if (navigator.vibrate) navigator.vibrate([100,50,100]);
+  if ('speechSynthesis' in window) {
+    const u = new SpeechSynthesisUtterance("テストテスト。Grokだ。聞こえるか？");
+    u.lang = 'ja-JP'; u.rate = 1.0; u.pitch = 1.0;
+    speechSynthesis.speak(u);
+  }
+}
+
+function playAlarm() {
+  testSound();   // テストと同じ音で鳴らす
+}
+
 
 updateStreak();
 updateDisplay();
