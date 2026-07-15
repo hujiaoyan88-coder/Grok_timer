@@ -135,6 +135,18 @@
   </div>
 </div>
 
+  <!-- 追加：音声要素（HTMLの<body>内の適当な場所、</div>の後とかに） -->
+<!-- 音声ファイル3つを用意 -->
+<audio id="audio30" preload="auto">
+  <source src="30s.mp4" type="audio/mp4">
+</audio>
+<audio id="audio60" preload="auto">
+  <source src="1m.mp4" type="audio/mp4">
+</audio>
+<audio id="audioOther" preload="auto">
+  <source src="time.mp4" type="audio/mp4">
+</audio>
+
 <script>
 // ==================== 変数 ====================
 let timeLeft = 0, intervalId = null, currentAlarmMessage = "";
@@ -143,6 +155,7 @@ const display = document.getElementById('display');
 const recordBtn = document.getElementById('recordBtn');
 const streakDisplay = document.getElementById('streakDisplay');
 let completedDates = JSON.parse(localStorage.getItem('grokCompleted')) || [];
+let currentAudio = null;
 
 // ==================== Audio ====================
 function initAudio() {
@@ -166,13 +179,25 @@ function updateDisplay() {
   const m = Math.floor(timeLeft / 60), s = timeLeft % 60;
   display.textContent = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
 }
-
+  
 function setTime(sec, msg = "時間終了だ。次は何するんだ？") {
   if (intervalId) clearInterval(intervalId);
-  timeLeft = sec; currentAlarmMessage = msg;
+  
+  timeLeft = sec;
+  currentAlarmMessage = msg;
+  
   updateDisplay();
   recordBtn.style.display = "none";
   display.style.color = '#00f0ff';
+
+  // === ここで使う音声を決める ===
+  if (sec === 30) {
+    currentAudio = document.getElementById('audio30');
+  } else if (sec === 60) {
+    currentAudio = document.getElementById('audio60');
+  } else {
+    currentAudio = document.getElementById('audioOther');
+  }
 }
 
 // ==================== タイマー ====================
@@ -181,8 +206,6 @@ function startQuick(sec) {
   let msg = "時間終了だ。次は何するんだ？";
   if (sec===30) msg="30秒耐えたな、軟弱者。";
   if (sec===60) msg="1分休憩終了。次セットすぐ始めろ。";
-  if (sec===180) msg="3分集中したな。まだまだいけるぞ。";
-  if (sec===300) msg="5分お疲れ。Grokは褒めてやる。";
   setTime(sec, msg); 
   startTimer();
 }
@@ -283,61 +306,21 @@ function playBeep() {
   } catch(e) { console.error("ビープエラー", e); }
 }
 
-// ==================== 男声アラーム ====================
+// ==================== 音声差し替え部分（playAlarm関数を置き換え） ====================
 function playAlarm() {
-  console.log("🚀 playAlarm 開始");
-  initAudio();
-  audioCtx.resume();
-  playBeep();
+  console.log("🎵 mp4音声再生 →", currentAudio ? currentAudio.id : "none");
+
+  if (currentAudio) {
+    currentAudio.currentTime = 0;        // 最初から再生
+    currentAudio.play().catch(e => {
+      console.error("再生失敗", e);
+      playBeep(); // 失敗時のフォールバック
+    });
+  } else {
+    playBeep();
+  }
 
   if (navigator.vibrate) navigator.vibrate([300,80,300,80,400]);
-
-  if (!('speechSynthesis' in window)) {
-    console.log("❌ SpeechSynthesis 非対応");
-    return;
-  }
-
-  const utterance = new SpeechSynthesisUtterance(currentAlarmMessage);
-  utterance.lang = 'ja-JP';
-  utterance.rate = 1.06;
-  utterance.pitch = 0.92;
-
-  function loadAndSpeak() {
-    const voices = speechSynthesis.getVoices();
-    console.log("📋 利用可能音声数:", voices.length);
-
-    let maleVoice = voices.find(v => v.name.includes("Otoya")) ||
-                    voices.find(v => v.name.includes("Hattori")) ||
-                    voices.find(v => v.lang === "ja-JP" && 
-                      (v.name.toLowerCase().includes("male") || v.name.includes("男")));
-
-    if (maleVoice) {
-      utterance.voice = maleVoice;
-      console.log("✅ 男声使用 →", maleVoice.name);
-    } else {
-      console.log("⚠️ 男声が見つからず。利用可能なja-JP音声:", 
-        voices.filter(v => v.lang.includes("ja")).map(v=>v.name));
-    }
-
-    speechSynthesis.cancel();
-    speechSynthesis.speak(utterance);
-  }
-
-  if (speechSynthesis.getVoices().length > 0) {
-    loadAndSpeak();
-  } else {
-    console.log("⏳ 音声ロード待機中...");
-    speechSynthesis.onvoiceschanged = () => {
-      loadAndSpeak();
-      speechSynthesis.onvoiceschanged = null;
-    };
-  }
-}
-
-// ==================== テスト ====================
-function testSound() {
-  currentAlarmMessage = "これは男声テスト。Grokの声で聞こえるか？";
-  playAlarm();
 }
 
 // 初期化
