@@ -63,41 +63,88 @@
 
   .streak { text-align: center; font-size: 1.4rem; color: #ffcc00; margin: 10px 0; text-shadow: 0 0 8px #ffcc00; }
 
-  /* === カレンダー（星を下に）=== */
+  /* === カレンダー（iPhone12で1画面に収まるように最適化）=== */
   .modal {
-    display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(0,0,0,0.95); z-index: 100; padding: 20px; overflow-y: auto;
+    display: none;
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0,0,0,0.95);
+    z-index: 100;
+    padding: 12px;
+    overflow: hidden;          /* スクロール不要 */
+    align-items: center;
+    justify-content: center;
   }
   .modal-content {
-    max-width: 600px; margin: 40px auto; background: #0f1b2e; padding: 25px; 
-    border-radius: 20px; border: 2px solid #00f0ff;
+    width: 100%;
+    max-width: 390px;          /* iPhone12幅にぴったり */
+    margin: 0 auto;
+    background: #0f1b2e;
+    padding: 14px 12px 16px;
+    border-radius: 16px;
+    border: 2px solid #00f0ff;
+    max-height: 92vh;          /* ノッチ・ホームバーを考慮 */
+    display: flex;
+    flex-direction: column;
+  }
+  .modal-content h2 {
+    text-align: center;
+    margin: 0 0 10px;
+    font-size: 1.25rem;
+    flex-shrink: 0;
   }
   .calendar-grid {
-    display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; text-align: center;
-    font-size: 1.15rem; font-weight: 600; margin-top: 15px;
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 3px;
+    text-align: center;
+    font-size: 0.95rem;
+    font-weight: 600;
+    margin: 0;
+    flex: 1;
   }
   .calendar-grid div { 
-    padding: 12px 4px; border-radius: 10px; background: rgba(255,255,255,0.05); 
+    padding: 4px 1px;
+    border-radius: 8px;
+    background: rgba(255,255,255,0.05); 
     color: #ddd;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     position: relative;
-    min-height: 52px;
+    min-height: 38px;          /* 6行でも余裕で収まる高さ */
+    box-sizing: border-box;
   }
   .calendar-grid .header { 
-    color: #00f0ff; font-size: 1rem; background: transparent; font-weight: 700;
-    min-height: auto;
+    color: #00f0ff;
+    font-size: 0.85rem;
+    background: transparent;
+    font-weight: 700;
+    min-height: 28px;
+    padding: 4px 1px;
   }
   .has-star::after { 
     content: '☆';
     color: #ffcc00; 
-    font-size: 1.35rem; 
-    text-shadow: 0 0 6px #ff0;
-    margin-top: 2px;
+    font-size: 1.05rem; 
+    text-shadow: 0 0 5px #ff0;
+    margin-top: 1px;
+    line-height: 1;
   }
   .today { border: 2px solid #00f0ff; background: rgba(0,240,255,0.2) !important; }
+
+  /* 閉じるボタンを常に下に固定 */
+  .modal-content > button {
+    width: 100%;
+    margin-top: 12px;
+    padding: 12px;
+    background: #00f0ff;
+    color: #000;
+    font-size: 1.1rem;
+    flex-shrink: 0;
+  }
 </style>
 </head>
 <body>
@@ -122,21 +169,17 @@
   </div>
 
   <button id="recordBtn" onclick="recordToday()">⭐ 今日の記録をつける</button>
-  <button onclick="testSound()" style="width:100%; background:#ff3366; color:white; padding:18px; font-size:1.3rem; margin:15px 0;">
-🔊 音声テスト
-</button>
   
   <div class="modal" id="calendarModal">
     <div class="modal-content">
-      <h2 style="text-align:center; margin-bottom:20px;">継続記録カレンダー</h2>
+      <h2>継続記録カレンダー</h2>
       <div id="calendarGrid" class="calendar-grid"></div>
-      <button onclick="toggleCalendar()" style="width:100%; margin-top:25px; padding:16px; background:#00f0ff; color:#000; font-size:1.2rem;">閉じる</button>
+      <button onclick="toggleCalendar()">閉じる</button>
     </div>
   </div>
 </div>
 
-  <!-- 追加：音声要素（HTMLの<body>内の適当な場所、</div>の後とかに） -->
-<!-- 音声ファイル3つを用意 -->
+  <!-- 音声要素 -->
 <audio id="audio30" preload="auto">
   <source src="30s.mp4" type="audio/mp4">
 </audio>
@@ -166,12 +209,10 @@ function initAudio() {
 function unlockAudio() {
   initAudio();
   
-  // スマホ対策：ユーザー操作でAudioContextを解除
   if (audioCtx.state === 'suspended') {
     audioCtx.resume();
   }
 
-  // すべてのaudio要素を一度だけtouch/unlock
   const audios = [
     document.getElementById('audio30'),
     document.getElementById('audio60'),
@@ -206,7 +247,6 @@ function setTime(sec, msg = "時間終了だ。次は何するんだ？") {
   recordBtn.style.display = "none";
   display.style.color = '#00f0ff';
 
-  // === ここで使う音声を決める ===
   if (sec === 30) {
     currentAudio = document.getElementById('audio30');
   } else if (sec === 60) {
@@ -322,7 +362,7 @@ function playBeep() {
   } catch(e) { console.error("ビープエラー", e); }
 }
 
-// ==================== 音声差し替え部分（playAlarm関数を置き換え） ====================
+// ==================== 音声差し替え部分 ====================
 function playAlarm() {
   if (!currentAudio) {
     playBeep();
@@ -333,10 +373,9 @@ function playAlarm() {
 
   currentAudio.currentTime = 0;
   
-  // 強制的にresume + play
   currentAudio.play().catch(err => {
     console.error("再生失敗 →", err);
-    playBeep();           // 失敗したらビープでフォールバック
+    playBeep();
   });
 }
 
