@@ -9,7 +9,7 @@
   "theme_color": "#14120e",
   "icons": [
     {
-      "src": "./Grok-timer.png",
+      "src": "./Grok_timer.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
