@@ -1,0 +1,18 @@
+{
+  "id": "./",
+  "name": "タイマー",
+  "short_name": "タイマー",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#0a001f",
+  "theme_color": "#14120e",
+  "icons": [
+    {
+      "src": "./Grok-timer.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}
